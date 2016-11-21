@@ -1,0 +1,392 @@
+/**
+ * Class represenging an abstraction of the history API.
+ */
+
+class History {
+
+  /**
+   * Public methods
+   */
+
+  /**
+    * Initialises the History class. Nothing should be able to
+    * operate here unless this has run with a support = true.
+    *
+    * @return {boolean}         Returns whether init ran or not
+    */
+  static init(devmode = false) {
+    if(this.support)
+    {
+      // Try to set everything up, and if we fail then return false
+      try {
+        window.addEventListener('popstate', (e)=> {
+          var hasPoppedState = this._popstate(e);
+          return hasPoppedState;
+        });
+
+        this.devmode      = devmode;
+
+      } catch (e) {
+
+        // If we're in devmode, send our console output
+        if(this.devmode) {
+          console.warn('error in history initialisation');
+          console.log(e);
+        }
+
+        return false;
+      }
+
+      this.initialised = true;
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * construct and push a URL state
+   *
+   * @param  {string} URL           The URL to push, can be relative, absolute or full
+   * @param  {string} title         The title to push.
+   * @param  {object} stateObj      A state to push to the stack. This will be popped when naviagting back
+   * @return {boolean}              Indicates whether the push succeeded
+   */
+  static push(URL, title = '', stateObj = {}) {
+
+    var parsedURL = '';
+
+    // First try to fix the URL
+    try {
+      parsedURL = this._fixURL(URL, true, true);
+    } catch (e) {
+      if(this.devmode) {
+        console.warn('push failed while trying to fix the URL');
+        console.log(e);
+      }
+      return false
+    }
+
+    // If we have API support, push the state to the history object
+    if(this.support)
+    {
+      try {
+        this.history.pushState(stateObj, title, parsedURL);
+      } catch (e) {
+        if(this.devmode) {
+          console.warn('push failed while trying to push the state to the history object');
+          console.log(e);
+        }
+        return false;
+      }
+    // Otherwiser, add the URL as a hashbang
+    } else
+    {
+      window.location.hash = `#!${URL}`;
+    }
+
+    return true;
+  }
+
+
+  /**
+   * Private methods
+   */
+
+  /**
+   * Takes a provided URL and returns the version that is usable
+   *
+   * @private
+   * @param  {string} URL                     The URL to be passed
+   * @param  {boolean} includeDocRoot = true  Whether to include the docroot on the passed URL
+   * @param  {boolean} includeTrails = true   Whether to include found hashes and params
+   * @return {string}                         The passed and formatted URL
+   */
+  static _fixURL(URL, includeDocRoot = true, includeTrails = true) {
+
+    var rtnURL;
+
+    /**
+     * URL Regex works like this:
+     * ```
+        ^
+        ([^:]+://           # HTTP(S) etc.
+            ([^/]+)         # The URL (if available)
+        )?
+        (#{@documentRoot})? # The document root, which we want to get rid of
+        (/)?                # check for the presence of a leading slash
+        ([^\#\?]*)          # The URI - this is what we care about. Check for everything except for # and ?
+        (\?[^\#]*)?         # any additional URL parameters (optional)
+        (\#\!?.+)?          # Any hashbang trailers (optional)
+     * ```
+     */
+    const URLRegex = RegExp(`^([^:]+://([^/]+))?(${this.documentRoot})?(/)?([^\\#\\?]*)(\\?[^\\#]*)?(\\#\\!?.+)?`);
+    const [input, href, hostname, documentRoot, root, path, params, hashbang] = URLRegex.exec(URL);
+
+    // If we're observing the TLDN restraint and the provided URL doesn't match
+    // the domain's TLDN, throw a URIError
+    if( typeof hostname === 'string' && hostname !== this.TLDN && this.observeTLDN === true ) {
+      throw new URIError('Top Level domain name MUST match the primary domain name');
+    }
+
+    // If our matched URL has a leading slash, then we want to drop the docRoot
+    // in there unless the function param "includeDocRoot" is false.
+    if(
+      ( typeof root === 'string' && root === '/' ) ||
+      ( typeof documentRoot === 'string' && documentRoot === this.documentRoot )
+    ) {
+      if( includeDocRoot ) {
+        rtnURL = `${this.documentRoot}${path}`;
+      } else {
+        rtnURL = `/${path}`;
+      }
+    // Else if path has resulted in an empty string, assume the path is the root
+    } else if( path === '' ) {
+      rtnURL = '/'
+    // Otherwise, just pass the path completely.
+    } else {
+      rtnURL = path;
+    }
+
+    // If we want to include trails (hashes and params, as determined by a
+    // funciton param), then add them to the URL.
+    if( includeTrails ) {
+      // Append any params
+      if( typeof params == 'string' ) {
+        rtnURL += params;
+      }
+        // Append any hashes
+      if( typeof hashbang == 'string' ) {
+        rtnURL += hashbang;
+      }
+    }
+
+    return rtnURL;
+  }
+
+  /**
+   * Listener for the popstate method
+   *
+   * @private
+   * @param  {object} e the passed event object
+   * @return void
+   */
+  static _popstate(e) {
+    var base, state;
+    console.log(e);
+    if(this.support)
+    {
+      state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
+      console.log(state);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Getters and setters
+   */
+
+  /**
+   * Sets the document root from a passed URL
+   *
+   * @param  {string} documentRoot = 'The URL to derive a document root from'
+   */
+  static set documentRoot(documentRoot = '') {
+
+    /**
+     * docrootRegex works like this:
+     * ```
+         ^
+         ([^:]+://       # HTTP(S) etc.
+             ([^/]+)     # The hostname (if available)
+         )?
+         /?
+         (.*(?=/))?      # the URI to use as the docroot less any available trailing slash
+     * ```
+     */
+    const docrootRegex = /^([^:]+:\/\/([^\/]+))?\/?(.*(?=\/))?/;
+    // pass the docroot and hostname
+    const [_1, _2, hostname, docroot] = docrootRegex.exec(documentRoot);
+
+    // Error check
+    // check for the presence of the reported TLDN
+    if(
+      typeof hostname === 'string' &&
+      hostname != this.TLDN &&
+      this.observeTLDN === true
+    ) {
+      throw new URIError('Top Level domain name MUST match the primary domain name');
+    }
+
+    this._documentRoot = `/${docroot}`;
+  }
+
+  /**
+   * return the document root OR a slash
+   *
+   * @return {string}  returns the saved document root or a `/` if not set
+   */
+  static get documentRoot() {
+    return this._documentRoot || '/';
+  }
+
+  /**
+   * provides an error if the user tries to set the history object
+   */
+  static set history(history) {
+    throw new Error('The history object is read only');
+  }
+
+  /**
+   * returns the window history object
+   *
+   * @return {object}  window.history
+   */
+  static get history() {
+    return window.history;
+  }
+
+  /**
+   * sets the top level domain name
+   *
+   * @param  {string} TLDN The top level domain name for this history object
+   */
+  static set TLDN(TLDN) {
+    // @note We should include some error checking in here
+    this._TLDN = TLDN;
+  }
+
+  /**
+   * returns the TLDN for this history object.
+   *
+   * @return {string}  The recorded TLDN or, by default, window.location.hostname.
+   */
+  static get TLDN() {
+    return this._TLDN || window.location.hostname;
+  }
+
+  /**
+   * Whether to make the object ovserve the domain
+   *
+   * @param  {boolean} observe Whether to make the object ovserve the domain
+   */
+  static set observeTLDN(observe) {
+    // Check to make sure that the bassed value is of type boolean.
+    if(typeof observe === 'boolean')
+    {
+      this._observeTLDN = observe;
+    } else
+    {
+      console.warn('observeTLDN must be of type boolean');
+    }
+  }
+
+  /**
+   * STATIC GET observeTLDN - returns the observeTLDN value
+   *
+   * @return {boolean}  whether to observe the TLDN or `true` (default)
+   */
+  static get observeTLDN() {
+    if(typeof this._observeTLDN === 'boolean')
+    {
+      return this._observeTLDN;
+    } else
+    {
+      return true;
+    }
+  }
+
+  /**
+   * STATIC SET devmode - Sets whether this history object is in devmode
+   *
+   * @param  {boolean} devmode
+   */
+  static set devmode(devmode) {
+    // Check to make sure that the bassed value is of type boolean.
+    if(typeof devmode === 'boolean')
+    {
+      this._devmode = devmode;
+    } else
+    {
+      console.warn('devmode must be of type boolean');
+    }
+  }
+
+  /**
+   * Returns the devmode value
+   *
+   * @return {boolean}  The devmode valur or false (default)
+   */
+  static get devmode() {
+    if(typeof this._devmode === 'boolean')
+    {
+      return this._devmode;
+    } else
+    {
+      return false;
+    }
+  }
+
+  /**
+   * Sets whether this history object is initialiased
+   *
+   * @param  {boolean} initialiased
+   */
+  static set initialiased(initialiased) {
+    // Check to make sure that the bassed value is of type boolean.
+    if(typeof initialiased === 'boolean')
+    {
+      this._initialiased = initialiased;
+    } else
+    {
+      console.warn('initialiased must be of type boolean');
+    }
+  }
+
+  /**
+   * Returns the initialiased value
+   *
+   * @return {boolean}  The initialiased valur or false (default)
+   */
+  static get initialiased() {
+    if(typeof this._initialiased === 'boolean')
+    {
+      return this._initialiased;
+    } else
+    {
+      return false;
+    }
+  }
+
+  /**
+   * provides an error if the user tries to set the support value
+   */
+  static set support(support = false) {
+    // This overrides
+    if( this.devmode && typeof support === 'boolean' ) {
+      this._support = support;
+    }
+    throw new Error('The support is read only');
+  }
+
+  /**
+   * Returns whether history is supported by the browser or device
+   *
+   * @return {boolean}  The support valur or true (default)
+   */
+  static get support() {
+    return (window.history && window.history.pushState);
+  }
+
+  /**
+   * returns the length of the history stack
+   *
+   * @return {int}  how many history objects exist in the stack
+   */
+  static get length() {
+    return this.history.length;
+  }
+}
+
+export default History;
