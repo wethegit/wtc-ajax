@@ -47,9 +47,9 @@ class History {
   }
 
   /**
-   * construct and push a URL state
+   * Construct and push a URL state
    *
-   * @Public
+   * @public
    * @param  {string} URL           The URL to push, can be relative, absolute or full
    * @param  {string} title         The title to push.
    * @param  {object} stateObj      A state to push to the stack. This will be popped when naviagting back
@@ -89,6 +89,24 @@ class History {
     }
 
     return true;
+  }
+
+  /**
+   * Takes the user back to the previous state. Simply wraps the history object's back method.
+   *
+   * @public
+   */
+  static back() {
+    this.history.back();
+  }
+
+  /**
+   * Takes the user forward to the next state. Simply wraps the history object's forward method.
+   *
+   * @public
+   */
+  static forward() {
+    this.history.forward();
   }
 
 
