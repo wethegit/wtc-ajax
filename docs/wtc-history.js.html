@@ -1,8 +1,14 @@
-/**
+
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * Class represenging an abstraction of the history API.
- * @static
- * @namespace
  */
+
 class History {
 
   /**
@@ -13,7 +19,6 @@ class History {
     * Initialises the History class. Nothing should be able to
     * operate here unless this has run with a support = true.
     *
-    * @Public
     * @return {boolean}         Returns whether init ran or not
     */
   static init(devmode = false) {
@@ -49,7 +54,6 @@ class History {
   /**
    * construct and push a URL state
    *
-   * @Public
    * @param  {string} URL           The URL to push, can be relative, absolute or full
    * @param  {string} title         The title to push.
    * @param  {object} stateObj      A state to push to the stack. This will be popped when naviagting back
@@ -128,15 +132,15 @@ class History {
 
     // If we're observing the TLDN restraint and the provided URL doesn't match
     // the domain's TLDN, throw a URIError
-    if( typeof hostname === 'string' && hostname !== this.TLDN && this.observeTLDN === true ) {
+    if( typeof hostname === 'string' &amp;&amp; hostname !== this.TLDN &amp;&amp; this.observeTLDN === true ) {
       throw new URIError('Top Level domain name MUST match the primary domain name');
     }
 
     // If our matched URL has a leading slash, then we want to drop the docRoot
     // in there unless the function param "includeDocRoot" is false.
     if(
-      ( typeof root === 'string' && root === '/' ) ||
-      ( typeof documentRoot === 'string' && documentRoot === this.documentRoot )
+      ( typeof root === 'string' &amp;&amp; root === '/' ) ||
+      ( typeof documentRoot === 'string' &amp;&amp; documentRoot === this.documentRoot )
     ) {
       if( includeDocRoot ) {
         rtnURL = `${this.documentRoot}${path}`;
@@ -191,11 +195,9 @@ class History {
    */
 
   /**
-   * (getter/setter) Sets the document root from a passed URL
-   * returns the saved document root or a `/` if not set
+   * Sets the document root from a passed URL
    *
-   * @default '/'
-   * @type {string}
+   * @param  {string} documentRoot = 'The URL to derive a document root from'
    */
   static set documentRoot(documentRoot = '') {
 
@@ -217,8 +219,8 @@ class History {
     // Error check
     // check for the presence of the reported TLDN
     if(
-      typeof hostname === 'string' &&
-      hostname != this.TLDN &&
+      typeof hostname === 'string' &amp;&amp;
+      hostname != this.TLDN &amp;&amp;
       this.observeTLDN === true
     ) {
       throw new URIError('Top Level domain name MUST match the primary domain name');
@@ -226,42 +228,55 @@ class History {
 
     this._documentRoot = `/${docroot}`;
   }
+
+  /**
+   * return the document root OR a slash
+   *
+   * @return {string}  returns the saved document root or a `/` if not set
+   */
   static get documentRoot() {
     return this._documentRoot || '/';
   }
 
   /**
-   * (getter/setter) Provides an error if the user tries to set the history object
-   * returns the window history object
-   *
-   * @type {object}
+   * provides an error if the user tries to set the history object
    */
   static set history(history) {
     throw new Error('The history object is read only');
   }
+
+  /**
+   * returns the window history object
+   *
+   * @return {object}  window.history
+   */
   static get history() {
     return window.history;
   }
 
   /**
-   * (getter/setter) Sets the top level domain name.
-   * returns the recorded TLDN or, by default, window.location.hostname.
+   * sets the top level domain name
    *
-   * @type {string}
+   * @param  {string} TLDN The top level domain name for this history object
    */
   static set TLDN(TLDN) {
     // @note We should include some error checking in here
     this._TLDN = TLDN;
   }
+
+  /**
+   * returns the TLDN for this history object.
+   *
+   * @return {string}  The recorded TLDN or, by default, window.location.hostname.
+   */
   static get TLDN() {
     return this._TLDN || window.location.hostname;
   }
 
   /**
-   * (getter/setter) whether to observe the TLDN or `true` (default).
+   * Whether to make the object ovserve the domain
    *
-   * @default true
-   * @type {boolean}
+   * @param  {boolean} observe Whether to make the object ovserve the domain
    */
   static set observeTLDN(observe) {
     // Check to make sure that the bassed value is of type boolean.
@@ -273,6 +288,12 @@ class History {
       console.warn('observeTLDN must be of type boolean');
     }
   }
+
+  /**
+   * returns the observeTLDN value
+   *
+   * @return {boolean}  whether to observe the TLDN or `true` (default)
+   */
   static get observeTLDN() {
     if(typeof this._observeTLDN === 'boolean')
     {
@@ -284,10 +305,9 @@ class History {
   }
 
   /**
-   * (getter/setter) Whether this history object is in devmode. Defaults to false
+   * Sets whether this history object is in devmode
    *
-   * @default false
-   * @type {boolean}
+   * @param  {boolean} devmode
    */
   static set devmode(devmode) {
     // Check to make sure that the bassed value is of type boolean.
@@ -299,6 +319,12 @@ class History {
       console.warn('devmode must be of type boolean');
     }
   }
+
+  /**
+   * Returns the devmode value
+   *
+   * @return {boolean}  The devmode valur or false (default)
+   */
   static get devmode() {
     if(typeof this._devmode === 'boolean')
     {
@@ -310,10 +336,9 @@ class History {
   }
 
   /**
-   * (getter/setter) Whether this history object is initialiased.
+   * Sets whether this history object is initialiased
    *
-   * @default false
-   * @type {boolean}
+   * @param  {boolean} initialiased
    */
   static set initialiased(initialiased) {
     // Check to make sure that the bassed value is of type boolean.
@@ -325,6 +350,12 @@ class History {
       console.warn('initialiased must be of type boolean');
     }
   }
+
+  /**
+   * Returns the initialiased value
+   *
+   * @return {boolean}  The initialiased valur or false (default)
+   */
   static get initialiased() {
     if(typeof this._initialiased === 'boolean')
     {
@@ -336,26 +367,29 @@ class History {
   }
 
   /**
-   * (getter/setter) Whether history is supported by the browser or device.
-   * Provides an error if the user tries to set the support value, unless the object is in devmode
-   *
-   * @type {boolean}
+   * provides an error if the user tries to set the support value
    */
   static set support(support = false) {
     // This overrides
-    if( this.devmode && typeof support === 'boolean' ) {
+    if( this.devmode &amp;&amp; typeof support === 'boolean' ) {
       this._support = support;
     }
     throw new Error('The support is read only');
   }
+
+  /**
+   * Returns whether history is supported by the browser or device
+   *
+   * @return {boolean}  The support valur or true (default)
+   */
   static get support() {
-    return (window.history && window.history.pushState);
+    return (window.history &amp;&amp; window.history.pushState);
   }
 
   /**
-   * (getter/setter) The length of the history stack
+   * returns the length of the history stack
    *
-   * @type {integer}
+   * @return {int}  how many history objects exist in the stack
    */
   static get length() {
     return this.history.length;
@@ -363,3 +397,9 @@ class History {
 }
 
 export default History;
+</code></pre>
+        </article>
+    </section>
+
+
+

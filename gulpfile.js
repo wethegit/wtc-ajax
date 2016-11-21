@@ -48,7 +48,7 @@ gulp.task('build', function() {
 
 gulp.task('document', function(cb) {
 
-  // var config = require('./jsdoc.json');
+  var config = require('./jsdoc.json');
   gulp.src(['README.md', './src/**/*.js'], {read: false})
-      .pipe(jsdoc(cb));
+      .pipe(jsdoc(config, cb));
 })
