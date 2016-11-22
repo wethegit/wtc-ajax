@@ -196,7 +196,6 @@ class History {
    */
   static _popstate(e) {
     var base, state;
-    console.log(e, document.location);
     if(this.support)
     {
       try {

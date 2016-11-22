@@ -8,6 +8,10 @@ const STATES = {
   'LOADED'            : 8
 }
 
+const SELECTORS = {
+  'CHILDREN'          : 0 // This indicates that the selection should be all children. This assumes that we have a valid target to work with.
+}
+
 /**
  * An AJAX class that picks up on links and turns them into AJAX links.
  *
@@ -85,14 +89,15 @@ class AJAX extends History {
    * but it can alternatively be called directly on the AJAX object.
    *
    * @static
-   * @param  {string} URL             The URL to get. This will be parsed into an appropriate fomat by the object.
-   * @param  {string} target          The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
-   * @param  {string} selection       This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
+   * @param  {string} URL               The URL to get. This will be parsed into an appropriate fomat by the object.
+   * @param  {string} target            The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
+   * @param  {string} selection         This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
+   * @param  {boolean} fromPop          Indicates that this GET is from a pop
    * @param  {object} [data = {}]       The data to pass to the AJAX call.
    * @param  {function} [onload]        The onload function to run (TBI).
    * @param  {object} [onloadcontext]   The context under which to run the onload function.
    */
-  static ajaxGet(URL, target, selection, data = {}, onload, onloadcontext) {
+  static ajaxGet(URL, target, selection, fromPop = false, data = {}, onload, onloadcontext) {
 
     if( this.state > STATES.CLICKED )
     {
@@ -120,7 +125,7 @@ class AJAX extends History {
 
     req.addEventListener('load', (e) => {
       if( req.status >= 200 && req.status < 400 ) {
-        this._parseResponse(req.responseText, target, selection, onload, onloadcontext)
+        this._parseResponse(req.responseText, target, selection, fromPop, onload, onloadcontext)
       } else {
         this._error(readyState, req.status);
       }
@@ -145,6 +150,40 @@ class AJAX extends History {
   /**
    * Private methods
    */
+
+  /**
+   * Listener for the popstate method
+   *
+   * @private
+   * @param  {object} e the passed event object
+   * @return void
+   */
+  static _popstate(e) {
+    var base, state = {};
+    var hasPoppedState = super._popstate(e);
+
+    if( hasPoppedState ) {
+      state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
+    }
+
+    var href = document.location.href;
+    var target = state.target || this.lastChangedTarget;
+    var selection = state.selection || SELECTORS.CHILDREN;
+    var data = state.data || {};
+    var onload = state.onload || function(){};
+    var onloadcontext = state.onloadcontext || this;
+
+    console.log(' ')
+    console.log('---------')
+    console.log(hasPoppedState, document.location.href, 'from AJAX');
+    console.log(target, selection, data, onload)
+    console.log('---------')
+    console.log(' ')
+
+    this.ajaxGet(href, target, selection, true, data, onload, onloadcontext);
+
+    return hasPoppedState;
+  }
 
   /**
    * Trigger an ajax link as determined by a click callback. This should only ever be called
@@ -184,15 +223,16 @@ class AJAX extends History {
    *
    * @static
    * @private
-   * @param  {string} content         The loaded page content, this comes from the AJAX call.
-   * @param  {string} target          The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
-   * @param  {string} selection       This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
+   * @param  {string} content           The loaded page content, this comes from the AJAX call.
+   * @param  {string} target            The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
+   * @param  {string} selection         This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
+   * @param  {boolean} fromPop          Indicates that this load is from a history pop
    * @param  {function} [onload]        The onload function to run (TBI).
    * @param  {object} [onloadcontext]   The context under which to run the onload function.
    */
-  static _parseResponse(content, target, selection, onload, onloadcontext) {
+  static _parseResponse(content, target, selection, fromPop = false, onload, onloadcontext) {
 
-    var doc, results, oldTitle = document.title, newTitle, targetNodes = document.querySelectorAll(target);
+    var doc, results, oldTitle = document.title, newTitle, targetNodes;
 
     // Parse the document from the content provided
     doc = document.createElement('div');
@@ -201,16 +241,25 @@ class AJAX extends History {
     // Find the new page title
     newTitle = doc.getElementsByTagName('title')[0].text;
 
-    // Find the results of the selection
-    // N.B. This will all need to be updated to support the array syntax
-    results = doc.querySelectorAll(selection);
+    targetNodes = document.querySelectorAll(target);
 
     // I need to add a tonne of things here, like support for transition off etc.
     // Currently I'm just statically removing and adding in elements.
     targetNodes.forEach((el) => {
       el.innerHTML = '';
 
-      console.log(el)
+      console.log(el);
+
+      // Find the results of the selection
+      // N.B. This will all need to be updated to support the array syntax
+      console.log(`selection: ${selection}`)
+      if( selection === SELECTORS.CHILDREN )
+      {
+        console.log(doc.querySelector(target));
+        results = doc.querySelectorAll(`${target} > *`);
+      } else {
+        results = doc.querySelectorAll(selection);
+      }
 
       results.forEach(function(result) {
         el.appendChild(result.cloneNode(true));
@@ -220,8 +269,10 @@ class AJAX extends History {
     // Update the internal reference to the last target
     this.lastChangedTarget = target;
 
-    // Push the new state to the history.
-    this.push(this.lastParsedURL, newTitle, { target: target, selection: selection, onload: onload, onloadcontext: onloadcontext });
+    if( !fromPop ) {
+      // Push the new state to the history.
+      this.push(this.lastParsedURL, newTitle, { target: target, selection: selection, onload: onload, onloadcontext: onloadcontext });
+    }
 
     // Set the object state
     this.state = STATES.OK;
