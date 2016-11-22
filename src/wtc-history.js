@@ -1,5 +1,5 @@
 /**
- * Class represenging an abstraction of the history API.
+ * Class representing an abstraction of the history API.
  * @static
  * @namespace
  */

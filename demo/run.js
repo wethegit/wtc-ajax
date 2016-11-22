@@ -1,6 +1,19 @@
-import History from "../src/wtc-history";
+import AJAX from "../src/wtc-ajax";
 
 // Initialise the history object in dev mode
-History.init(true);
+AJAX.init(true);
 
-window.Historyobj = History;
+function ready(fn) {
+  if (document.readyState != 'loading') {
+    fn();
+  } else {
+    document.addEventListener('DOMContentLoaded', fn);
+  }
+}
+
+ready(function()
+{
+  AJAX.initLinks();
+});
+
+window.AJAXObj = AJAX;
