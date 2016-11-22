@@ -24,6 +24,9 @@ const SELECTORS = {
  * @static
  * @namespace
  * @extends History
+ * @author Liam Egan <liam@wethecollective.com>
+ * @version 0.5
+ * @created Nov 19, 2016
  */
 class AJAX extends History {
 
@@ -173,13 +176,6 @@ class AJAX extends History {
     var onload = state.onload || function(){};
     var onloadcontext = state.onloadcontext || this;
 
-    console.log(' ')
-    console.log('---------')
-    console.log(hasPoppedState, document.location.href, 'from AJAX');
-    console.log(target, selection, data, onload)
-    console.log('---------')
-    console.log(' ')
-
     this.ajaxGet(href, target, selection, true, data, onload, onloadcontext);
 
     return hasPoppedState;
@@ -248,14 +244,10 @@ class AJAX extends History {
     targetNodes.forEach((el) => {
       el.innerHTML = '';
 
-      console.log(el);
-
       // Find the results of the selection
       // N.B. This will all need to be updated to support the array syntax
-      console.log(`selection: ${selection}`)
       if( selection === SELECTORS.CHILDREN )
       {
-        console.log(doc.querySelector(target));
         results = doc.querySelectorAll(`${target} > *`);
       } else {
         results = doc.querySelectorAll(selection);

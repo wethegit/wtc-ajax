@@ -2,6 +2,9 @@
  * Class representing an abstraction of the history API.
  * @static
  * @namespace
+ * @author Liam Egan <liam@wethecollective.com>
+ * @version 0.8
+ * @created Nov 19, 2016
  */
 class History {
 
