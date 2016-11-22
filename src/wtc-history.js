@@ -144,6 +144,8 @@ class History {
     const URLRegex = RegExp(`^([^:]+://([^/]+))?(${this.documentRoot})?(/)?([^\\#\\?]*)(\\?[^\\#]*)?(\\#\\!?.+)?`);
     const [input, href, hostname, documentRoot, root, path, params, hashbang] = URLRegex.exec(URL);
 
+    console.log(this.documentRoot, documentRoot, root, path);
+
     // If we're observing the TLDN restraint and the provided URL doesn't match
     // the domain's TLDN, throw a URIError
     if( typeof hostname === 'string' && hostname !== this.TLDN && this.observeTLDN === true ) {
@@ -157,7 +159,7 @@ class History {
       ( typeof documentRoot === 'string' && documentRoot === this.documentRoot )
     ) {
       if( includeDocRoot ) {
-        rtnURL = `${this.documentRoot}${path}`;
+        rtnURL = `${this.documentRoot}/${path}`;
       } else {
         rtnURL = `/${path}`;
       }
@@ -194,12 +196,15 @@ class History {
    */
   static _popstate(e) {
     var base, state;
-    console.log(e);
+    console.log(e, document.location);
     if(this.support)
     {
-      state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
-      console.log(state);
-      return true;
+      try {
+        state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
     return false;
   }
@@ -231,6 +236,7 @@ class History {
     const docrootRegex = /^([^:]+:\/\/([^\/]+))?\/?(.*(?=\/))?/;
     // pass the docroot and hostname
     const [_1, _2, hostname, docroot] = docrootRegex.exec(documentRoot);
+    console.log(hostname, docroot);
 
     // Error check
     // check for the presence of the reported TLDN
