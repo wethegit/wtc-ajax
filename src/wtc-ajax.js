@@ -1,4 +1,5 @@
 import History from "./wtc-history";
+import Animation from "./wtc-AnimationEvents";
 
 const STATES = {
   'OK'                : 0,
@@ -10,6 +11,12 @@ const STATES = {
 
 const SELECTORS = {
   'CHILDREN'          : 0 // This indicates that the selection should be all children. This assumes that we have a valid target to work with.
+}
+
+const ERRORS = {
+  'GENERIC_ERROR'     : 0,
+  'BAD_PROMISE'       : 1,
+  'LOAD_ERROR'        : 2
 }
 
 /**
@@ -86,22 +93,50 @@ class AJAX extends History {
     });
   }
 
+  /**
+   * The resolving object. This is the object that is passed to AJAX GET promise thens
+   * and should be passed onto subsequent THENable calls.
+   *
+   * @callback AJAXGetResolver
+   * @param {string} response           The response from the AJAX call
+   * @param {array} arguments           The arguments array originally passed to the {@link AJAX.ajaxGet} method
+   * @param {DOMElement} linkTarget     The target element that fired the {@link AJAX.ajaxGet} 
+   */
+  /**
+   * Callback for AJAX GET onload. This is called when the content is loaded.
+   *
+   * @callback loadResolve
+   * @param {AJAXGetResolver} resolver  The resolving object for the AJAX request
+   * @return {AJAXGetResolver}          The ongoing resolving object for the AJAX request
+   */
+  /**
+   * Callback for AJAX GET error. This is called when an error occurs after
+   * calling an ajax GET.
+   *
+   * @callback loadReject
+   * @param {object} error              The error that occurred
+   * @param {array} args                The arguments that were passed to the request
+   * @param {DOMElement} [targetLink]   The link that spawned the ajax request
+   */
 
   /**
    * This builds out an AJAX request, normally based on the clicking of a link,
    * but it can alternatively be called directly on the AJAX object.
    *
    * @static
-   * @param  {string} URL               The URL to get. This will be parsed into an appropriate fomat by the object.
-   * @param  {string} target            The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
-   * @param  {string} selection         This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
-   * @param  {boolean} fromPop          Indicates that this GET is from a pop
-   * @param  {object} [data = {}]       The data to pass to the AJAX call.
-   * @param  {function} [onload]        The onload function to run (TBI).
-   * @param  {object} [onloadcontext]   The context under which to run the onload function.
+   * @param  {string} URL                     The URL to get. This will be parsed into an appropriate fomat by the object.
+   * @param  {string} target                  The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
+   * @param  {string} selection               This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
+   * @param  {DOMElement} [linkTarget]        The target of the link. This is useful for setting active states in callback.
+   * @param  {boolean} fromPop                Indicates that this GET is from a pop
+   * @param  {object} [data = {}]             The data to pass to the AJAX call.
+   * @return {Promise}
+   * @return {loadResolve}
+   * @return {loadReject}                     A promise that represents the GET
    */
-  static ajaxGet(URL, target, selection, fromPop = false, data = {}, onload, onloadcontext) {
+  static ajaxGet(URL, target, selection, linkTarget, fromPop = false, data = {}) {
 
+    // Set the state of the AJAX class to clicked, incidating something is loading
     if( this.state > STATES.CLICKED )
     {
       if( this.devmode )
@@ -112,31 +147,57 @@ class AJAX extends History {
       return;
     }
 
-    console.log('-----------');
+    // Retrieve a request object and construct a valid URL
     const req = this.requestObject;
     const parsedURL = this._fixURL(URL);
 
-    console.log('-----------');
-
     var readyState = 0;
     var status = 0;
+    var args = arguments;
 
-    req.addEventListener('readystatechange', (e) => {
-      readyState = e.target.readyState;
-      status = e.target.status;
-    });
+    var requestPromise = new Promise(function handler(resolve, reject) {
 
-    req.addEventListener('load', (e) => {
-      if( req.status >= 200 && req.status < 400 ) {
-        this._parseResponse(req.responseText, target, selection, fromPop, onload, onloadcontext)
+      // Listen for the ready state
+      req.addEventListener('readystatechange', (e) => {
+        readyState = e.target.readyState;
+        status = e.target.status;
+      });
+
+      // Listem for the load event
+      req.addEventListener('load', (e) => {
+        // If we have a ready state that indicated that the load was a success, continue
+        if( req.status >= 200 && req.status < 400 ) {
+          // Get the request response text
+          var responseText = req.responseText
+          var resolver = {
+            responseText: responseText, 
+            arguments: args, 
+            linkTarget: linkTarget || null
+          }
+          resolve(resolver);
+        } else {
+          reject(ERRORS.LOAD_ERROR);
+        }
+      });
+
+      req.addEventListener('error', (e) => {
+        reject(ERRORS.LOAD_ERROR);
+      });
+    }.bind(this));
+
+    // This promise takes the returned promise and runs the equivalent of a "finally"
+    Promise.resolve(requestPromise).then(function(resolver) {
+      if(resolver.error) {
+        throw resolver.error
+      } else if(!resolver.responseText) {
+        throw ERRORS.BAD_PROMISE
       } else {
-        this._error(readyState, req.status);
+        // Finally, pass the result.
+        this._parseResponse(resolver.responseText, target, selection, fromPop, linkTarget)
       }
-    });
-
-    req.addEventListener('error', (e) => {
-      this._error(readyState, status);
-    });
+    }.bind(this)).catch(function(err) {
+      this._error(readyState, req.status, err || 0);
+    }.bind(this));
 
     // Save the last parsed URL for the purpose of history interoperability and error correction.
     this.lastParsedURL = parsedURL;
@@ -147,7 +208,7 @@ class AJAX extends History {
     // Set the object state
     this.state = STATES.LOADING;
 
-    return req;
+    return requestPromise;
   }
 
   /**
@@ -174,9 +235,9 @@ class AJAX extends History {
     var selection = state.selection || SELECTORS.CHILDREN;
     var data = state.data || {};
     var onload = state.onload || function(){};
-    var onloadcontext = state.onloadcontext || this;
+    var onerror = state.onerror || this;
 
-    this.ajaxGet(href, target, selection, true, data, onload, onloadcontext);
+    this.ajaxGet(href, target, selection, onload, onerror, true, data);
 
     return hasPoppedState;
   }
@@ -224,9 +285,10 @@ class AJAX extends History {
    * @param  {string} selection         This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
    * @param  {boolean} fromPop          Indicates that this load is from a history pop
    * @param  {function} [onload]        The onload function to run (TBI).
-   * @param  {object} [onloadcontext]   The context under which to run the onload function.
+   * @param  {function} [onerror]       The on error function
+   * @param  {DOMElement} [linkTarget]  The target of the link. This is useful for setting active states in callback.
    */
-  static _parseResponse(content, target, selection, fromPop = false, onload, onloadcontext) {
+  static _parseResponse(content, target, selection, fromPop = false, onload, onerror, linkTarget) {
 
     var doc, results, oldTitle = document.title, newTitle, targetNodes;
 
@@ -242,6 +304,13 @@ class AJAX extends History {
     // I need to add a tonne of things here, like support for transition off etc.
     // Currently I'm just statically removing and adding in elements.
     targetNodes.forEach((el) => {
+      // Wokflow will go like this:
+      // Add the transition class to the element
+      // Time out a bit (10ms) and then add the transition end class
+      // Once complete, remove the transition classes and replace the old elements with the new (innerHTML)
+      // Then add the transition class to the element
+      // Time out a bit (10ms) and then add the transition end class
+
       el.innerHTML = '';
 
       // Find the results of the selection
@@ -263,7 +332,7 @@ class AJAX extends History {
 
     if( !fromPop ) {
       // Push the new state to the history.
-      this.push(this.lastParsedURL, newTitle, { target: target, selection: selection, onload: onload, onloadcontext: onloadcontext });
+      this.push(this.lastParsedURL, newTitle, { target: target, selection: selection, onload: onload, onerror: onerror });
     }
 
     // Set the object state
@@ -279,8 +348,9 @@ class AJAX extends History {
    * @param  {type} status     description
    * @return {type}            description
    */
-  static _error(readyState, status) {
-    console.warn(`%c Error loading AJAX link. readyState: ${readyState}. status: ${status}`, 'background: #222; color: #ff7c3a')
+  static _error(readyState, status, errorState = ERRORS.GENERIC_ERROR) {
+    var errorStateConst = (function(val) { for(key in ERRORS) { if(ERRORS[key] == val) return key } return 'GENERIC_ERROR' })(errorState)
+    console.warn(`%c Error loading AJAX link. readyState: ${readyState}. status: ${status}. errorState: ${errorStateConst}`, 'background: #222; color: #ff7c3a')
   }
 
 
@@ -345,6 +415,31 @@ class AJAX extends History {
   }
 
   /**
+   * (getter/setter) The classname to use as the basis for transitions. Default
+   * will be *wtc-transition*. So this will then be used for all 3 states:
+   * *.wtc-transition*
+   * *.wtc-transition-out*
+   * *.wtc-transition-out-start*
+   * *.wtc-transition-out-end*
+   * *.wtc-transition-in*
+   * *.wtc-transition-in-start*
+   * *.wtc-transition-in-end*
+   *
+   * @type {string}
+   * @default 'wtc-transition'
+   */
+  static set classBaseTransition(classBase) {
+    if(typeof classBase === 'string') {
+      this._classBaseTransition = classBase;
+    } else {
+      console.warn('All attributes must be strings.');
+    }
+  }
+  static get classBaseTransition() {
+    return this._classBaseTransition || 'wtc-transition';
+  }
+
+  /**
    * (getter/setter) The attribute used to slice the resultant GET.
    * This attribute should be in the form of a selector, ie:
    * `.ajax-selection`
@@ -366,6 +461,7 @@ class AJAX extends History {
   /**
    * returns a new requestObject. Wrapping placeholder for now waiting on enhancements.
    *
+   * @readonly
    * @return {object}  requestObject
    */
   static get requestObject() {
@@ -440,4 +536,4 @@ class AJAX extends History {
   }
 }
 
-export default AJAX;
+export { AJAX, ERRORS, STATES };

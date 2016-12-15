@@ -4,8 +4,11 @@
     <meta charset="utf-8">
     <title>AJAX Object test</title>
     <script src="index.js"></script>
+    <link rel="stylesheet" href="index.css" />
   </head>
   <body>
+    <h3>Navigational</h3>
+    <p>This navigation uses data attributes to trigger ajax links.</p>
     <ul>
       <li>
         <a
@@ -16,10 +19,19 @@
       </li>
     </ul>
 
+    <h3>Javascript based</h3>
+    <p>These links use the javascript method, with callbacks.</p>
+    <p>
+      <a id="link_1">This is a link</a>
+    </p>
+
     <h3>Link 1 target</h3>
     <div id="link1-target">
-      <div class="link1-selection">
-        This is the contents of link 1.
+      <div class="link1-selection content">
+        <h2>I'm the content from link numero uno.</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam id pharetra lacus. Duis metus felis, rutrum non tellus quis, consectetur porta felis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam mattis dolor vitae ex convallis, a dignissim velit sodales. Cras at magna placerat, lacinia tellus sit amet, aliquam lectus. Aenean condimentum eros in enim vulputate aliquet. Integer nisi diam, placerat quis nunc in, congue euismod nisl. Praesent felis nunc, iaculis at mi eu, suscipit consequat eros. Maecenas at eros fermentum, commodo tellus eu, feugiat enim. Etiam sit amet augue tempus, eleifend nunc ut, lacinia sem. Vestibulum at ultrices eros. Vestibulum placerat leo ante, eu dignissim tortor iaculis id. Nulla vehicula dui dui, in ultrices elit posuere ut. Ut sagittis nisi luctus tempor semper. Praesent interdum porttitor ultrices. Suspendisse potenti.</p>
+        <p>Etiam ante velit, ultrices ut turpis sed, commodo venenatis arcu. Aliquam erat volutpat. Praesent facilisis aliquam mi ultricies vulputate. Fusce augue justo, consectetur sit amet dictum et, aliquet nec lorem. Quisque nec augue sit amet urna pretium vehicula. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas posuere condimentum ultricies. Quisque eu quam blandit magna elementum convallis. Donec non commodo est, ut auctor tortor. Donec ac dolor quis elit ornare molestie. In aliquam sagittis enim vitae pellentesque.</p>
+        <p>Pellentesque porttitor fringilla neque vel blandit. Mauris eleifend feugiat vestibulum. Sed luctus est in magna tempor, ut consequat urna consequat. Etiam scelerisque sapien quis nisl sodales, pellentesque imperdiet orci tincidunt. Nullam tortor arcu, vulputate vitae dolor et, vehicula accumsan augue. Donec quis ultricies leo. Proin eu purus sit amet leo aliquet faucibus ut eu nunc. Nunc lacinia consequat odio et tristique. Nunc semper nisl sed orci tincidunt, vel imperdiet erat tincidunt. Nulla eleifend mauris eu arcu ornare, vitae feugiat metus cursus. Aliquam finibus aliquam leo, vitae lobortis lacus tempor et. Suspendisse semper est nisl, a gravida erat aliquet quis. Ut id ex non sem ullamcorper sollicitudin. Sed tincidunt purus ut ante bibendum, eu finibus ex molestie. Morbi in nisi purus.</p>
       </div>
     </div>
 

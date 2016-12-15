@@ -37,6 +37,20 @@
 				</ul>
 			</li>
 			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu inline">
+					<li><a href="module-wtc-AnimationEvents.html">wtc-AnimationEvents</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu inline">
+					<li><a href="global.html">Global</a></li>
+				</ul>
+			</li>
+			
 		</ul>
         
             <div class="col-sm-3 col-md-3">
@@ -414,6 +428,92 @@ This attribute should be in the form of a selector, ie:
         
             
 <hr>
+<dt class="name" id=".classBaseTransition">
+    <h4 id=".classBaseTransition"><span class="type-signature">&lt;static> </span>classBaseTransition<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>(getter/setter) The classname to use as the basis for transitions. Default
+will be <em>wtc-transition</em>. So this will then be used for all 3 states:
+<em>.wtc-transition</em>
+<em>.wtc-transition-out</em>
+<em>.wtc-transition-out-start</em>
+<em>.wtc-transition-out-end</em>
+<em>.wtc-transition-in</em>
+<em>.wtc-transition-in-start</em>
+<em>.wtc-transition-in-end</em></p>
+    </div>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">string</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default method-doc-label method-doc-details-label">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>'wtc-transition'</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        
+            
+<hr>
 <dt class="name" id=".attributeShouldNavigate">
     <h4 id=".attributeShouldNavigate"><span class="type-signature">&lt;static> </span>attributeShouldNavigate<span class="type-signature"> :string</span></h4>
 
@@ -495,7 +595,7 @@ This attribute should be in the form of a selector, ie:
             
 <hr>
 <dt class="name" id=".requestObject">
-    <h4 id=".requestObject"><span class="type-signature">&lt;static> </span>requestObject<span class="type-signature"></span></h4>
+    <h4 id=".requestObject"><span class="type-signature">&lt;static, readonly> </span>requestObject<span class="type-signature"></span></h4>
 
     
 </dt>
@@ -924,7 +1024,7 @@ so that you can load moltiple pieces of content from the source.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id=".ajaxGet"><span class="type-signature">&lt;static> </span>ajaxGet(URL, target, selection, fromPop [, data] [, onload] [, onloadcontext])</h4>
+    <h4 class="name" id=".ajaxGet"><span class="type-signature">&lt;static> </span>ajaxGet(URL, target, selection [, linkTarget], fromPop [, data])</h4>
     
     
 </dt>
@@ -1080,6 +1180,44 @@ but it can alternatively be called directly on the AJAX object.</p>
 
         <tr>
             
+                <td class="name"><code>linkTarget</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">DOMElement</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The target of the link. This is useful for setting active states in callback.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>fromPop</code></td>
             
 
@@ -1155,82 +1293,6 @@ but it can alternatively be called directly on the AJAX object.</p>
         </tr>
 
     
-
-        <tr>
-            
-                <td class="name"><code>onload</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The onload function to run (TBI).</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>onloadcontext</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The context under which to run the onload function.</p></td>
-        </tr>
-
-    
     </tbody>
 </table>
 
@@ -1287,6 +1349,66 @@ but it can alternatively be called directly on the AJAX object.</p>
     
 
     
+    <h5>Returns:</h5>
+    <ul>
+            <li>
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+
+    </dd>
+</dl>
+
+</li>
+        
+            <li>
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="global.html#loadResolve">loadResolve</a></span>
+
+
+
+    </dd>
+</dl>
+
+</li>
+        
+            <li>
+<div class="param-desc">
+    <p>A promise that represents the GET</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="global.html#loadReject">loadReject</a></span>
+
+
+
+    </dd>
+</dl>
+
+</li>
+        </ul>
 
     
 </dd>
@@ -1563,7 +1685,7 @@ from a click event as added via the AJAX object or a child thererof.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="._parseResponse"><span class="type-signature">&lt;private, static> </span>_parseResponse(content, target, selection, fromPop [, onload] [, onloadcontext])</h4>
+    <h4 class="name" id="._parseResponse"><span class="type-signature">&lt;private, static> </span>_parseResponse(content, target, selection, fromPop [, onload] [, onerror] [, linkTarget])</h4>
     
     
 </dt>
@@ -1796,13 +1918,13 @@ transitions and animations as necessary/</p>
 
         <tr>
             
-                <td class="name"><code>onloadcontext</code></td>
+                <td class="name"><code>onerror</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">object</span>
+<span class="param-type">function</span>
 
 
 
@@ -1827,7 +1949,45 @@ transitions and animations as necessary/</p>
                 </td>
             
 
-            <td class="description last"><p>The context under which to run the onload function.</p></td>
+            <td class="description last"><p>The on error function</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>linkTarget</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">DOMElement</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The target of the link. This is useful for setting active states in callback.</p></td>
         </tr>
 
     
@@ -2117,7 +2277,7 @@ transitions and animations as necessary/</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a>
 	
-		on November 22nd 2016, 2:46:19 pm
+		on December 15th 2016, 3:09:57 pm
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
