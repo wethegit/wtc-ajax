@@ -98,10 +98,18 @@ class AJAX extends History {
    * The resolving object. This is the object that is passed to AJAX GET promise thens
    * and should be passed onto subsequent THENable calls.
    *
-   * @callback AJAXGetResolver
-   * @param {string} response           The response from the AJAX call
-   * @param {array} arguments           The arguments array originally passed to the {@link AJAX.ajaxGet} method
-   * @param {DOMElement} linkTarget     The target element that fired the {@link AJAX.ajaxGet} 
+   * @typedef {Object}                     AJAXGetResolver
+   * @property {string}       response     The response from the AJAX call
+   * @property {AJAXDocument} document     The document nodes resulting from this call.
+   * @property {array}        arguments    The arguments array originally passed to the {@link AJAX.ajaxGet} method
+   * @property {DOMElement}   linkTarget   The target element that fired the {@link AJAX.ajaxGet} 
+   */
+
+
+  /**
+   * @typedef {Object}              AJAXDocument
+   * @property {DOMElement} doc     The full document node for the AJAX GET result
+   * @property {NodeList}   subdoc  The subdocument derived from the main document
    */
   /**
    * Callback for AJAX GET onload. This is called when the content is loaded.
@@ -151,12 +159,15 @@ class AJAX extends History {
     // Retrieve a request object and construct a valid URL
     const req = this.requestObject;
     const parsedURL = this._fixURL(URL);
+    const DOMTarget = document.querySelectorAll(target)[0];
 
     var readyState = 0;
     var status = 0;
     var args = arguments;
 
     var requestPromise = new Promise(function handler(resolve, reject) {
+
+      // Need to add all sorts of error checking here.
 
       // Listen for the ready state
       req.addEventListener('readystatechange', (e) => {
@@ -170,10 +181,15 @@ class AJAX extends History {
         if( req.status >= 200 && req.status < 400 ) {
           // Get the request response text
           var responseText = req.responseText
+          // Get the AJAXDocument
+          var AJAXDocument = this._parseResponse(responseText, target, selection, fromPop, linkTarget)
+          // Build the resolver
           var resolver = {
             responseText: responseText, 
+            document: AJAXDocument,
             arguments: args, 
-            linkTarget: linkTarget || null
+            linkTarget: linkTarget || null,
+            DOMTarget: DOMTarget
           }
           resolve(resolver);
         } else {
@@ -189,6 +205,7 @@ class AJAX extends History {
     // This promise takes the returned promise and runs the equivalent of a "finally"
     Promise.
       resolve(requestPromise).
+      // THEN: responsible for adding the transition classes, then finding the transition length and rutinging the promise from that
       then( function(resolver) {
         if(resolver.error) {
           throw resolver.error
@@ -196,8 +213,9 @@ class AJAX extends History {
           throw ERRORS.BAD_PROMISE
         } else {
           // Find the target node
-          let targetNode = document.querySelectorAll(target)[0];
+          let targetNode = resolver.DOMTarget;
           // add the class to it
+          _u.removeClass(this.classBaseTransition+'-in-end', targetNode);
           _u.addClass(this.classBaseTransition+'-out-start', targetNode);
           _u.addClass(this.classBaseTransition+'-out', targetNode);
           // Add the animation end listener to the target node
@@ -206,9 +224,10 @@ class AJAX extends History {
           });
         }
       }.bind(this) ).
+      // THEN: responsible for adding the end class, then returning a promise with the listed resolveTimeout
       then( function(resolver) {
         // Find the target node
-        let targetNode = document.querySelectorAll(target)[0];
+        let targetNode = resolver.DOMTarget;
         // Modify its classes
         _u.removeClass(this.classBaseTransition+'-out-start', targetNode);
         _u.addClass(this.classBaseTransition+'-out-end', targetNode);
@@ -219,14 +238,30 @@ class AJAX extends History {
           }, this.resolveTimeout);
         }.bind(this));
       }.bind(this) ).
+      // THEN: responsible for adding the final content to the main document. Returns a promise that identifies the transition
       then(function(resolver) {
         // Find the target node
-        let targetNode = document.querySelectorAll(target)[0];
+        let targetNode = resolver.DOMTarget;
         // Modify its classes
         _u.removeClass(this.classBaseTransition+'-out-end', targetNode);
-        _u.addClass(this.classBaseTransition+'-out', targetNode);
+        _u.removeClass(this.classBaseTransition+'-out', targetNode);
+        _u.addClass(this.classBaseTransition+'-in', targetNode);
+        _u.addClass(this.classBaseTransition+'-in-start', targetNode);
         // Finally. Parse the result
-        this._parseResponse(resolver.responseText, target, selection, fromPop, linkTarget)
+        this._completeTransfer(resolver.document, targetNode, selection, fromPop);
+        // Add the animation end listener to the target node
+        return Animation.addEndEventListener(targetNode, function() {
+          return resolver;
+        });
+      }.bind(this)).
+      // THEN: Responsible for tidying everything up
+      then(function(resolver) {
+        // Find the target node
+        let targetNode = resolver.DOMTarget;
+        // Modify its classes
+        _u.removeClass(this.classBaseTransition+'-in', targetNode);
+        _u.removeClass(this.classBaseTransition+'-in-start', targetNode);
+        _u.addClass(this.classBaseTransition+'-in-end', targetNode);
       }.bind(this)).
       catch( function(err) {
         console.log(err)
@@ -306,6 +341,12 @@ class AJAX extends History {
   }
 
   /**
+   * @typedef {Object}              AJAXDocument
+   * @property {DOMElement} doc     The full document node for the AJAX GET result
+   * @property {NodeList}   subdoc  The subdocument derived from the main document
+   */
+
+  /**
    * This responds to the ajax load event and is responsible for building the result,
    * injecting it into the page, running callbacks and detecting and delaying
    * transitions and animations as necessary/
@@ -314,47 +355,54 @@ class AJAX extends History {
    * @private
    * @param  {string} content           The loaded page content, this comes from the AJAX call.
    * @param  {string} target            The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
-   * @param  {string} selection         This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
-   * @param  {boolean} fromPop          Indicates that this load is from a history pop
+   * @param  {string} selection         This is a selector that determines what to cut from the loaded content.
    * @param  {DOMElement} [linkTarget]  The target of the link. This is useful for setting active states in callback.
+   * @return {AJAXDocument}             An object representing both the main document and the subdocument
    */
-  static _parseResponse(content, target, selection, fromPop = false, linkTarget) {
+  static _parseResponse(content, target, selection) {
 
-    var doc, results, oldTitle = document.title, newTitle, targetNodes;
+    var doc, subdoc, results;
 
     // Parse the document from the content provided
     doc = document.createElement('div');
     doc.innerHTML = content;
 
+    if( selection === SELECTORS.CHILDREN )
+    {
+      subdoc = doc.querySelectorAll(`${target} > *`);
+    } else {
+      subdoc = doc.querySelectorAll(selection);
+    }
+
+    return {
+      doc: doc,
+      subdoc: subdoc
+    }
+  }
+
+  /**
+   * This completes the transition of content. This removes the old content and adds the new
+   *
+   * @static
+   * @private
+   * @param  {AJAXDocument} content    The DOM nodes to add to the element
+   * @param  {DOMNode}      target     The target to add the new content to
+   * @param  {string}       selection  This is a selector that determines what to cut from the loaded content.
+   * @param  {boolean}      fromPop    Indicates that this load is from a history pop
+   */
+  static _completeTransfer(content, target, selection, fromPop) {
+
+    var oldTitle = document.title, newTitle, targetNodes;
+
+    console.log(content, content.doc.getElementsByTagName('title'));
+
     // Find the new page title
-    newTitle = doc.getElementsByTagName('title')[0].text;
+    newTitle = content.doc.getElementsByTagName('title')[0].text;
 
-    targetNodes = document.querySelectorAll(target);
+    target.innerHTML = '';
 
-    // I need to add a tonne of things here, like support for transition off etc.
-    // Currently I'm just statically removing and adding in elements.
-    targetNodes.forEach((el) => {
-      // Wokflow will go like this:
-      // Add the transition class to the element
-      // Time out a bit (10ms) and then add the transition end class
-      // Once complete, remove the transition classes and replace the old elements with the new (innerHTML)
-      // Then add the transition class to the element
-      // Time out a bit (10ms) and then add the transition end class
-
-      el.innerHTML = '';
-
-      // Find the results of the selection
-      // N.B. This will all need to be updated to support the array syntax
-      if( selection === SELECTORS.CHILDREN )
-      {
-        results = doc.querySelectorAll(`${target} > *`);
-      } else {
-        results = doc.querySelectorAll(selection);
-      }
-
-      results.forEach(function(result) {
-        el.appendChild(result.cloneNode(true));
-      });
+    content.subdoc.forEach(function(result) {
+      target.appendChild(result.cloneNode(true));
     });
 
     // Update the internal reference to the last target
@@ -364,7 +412,7 @@ class AJAX extends History {
       // Push the new state to the history.
       console.clear();
       console.log({ target: target, selection: selection });
-      this.push(this.lastParsedURL, newTitle, { target: target, selection: selection });
+      this.push(this.lastParsedURL, newTitle, { target: _u.getSelectorForElement(target), selection: selection });
     }
 
     // Set the object state

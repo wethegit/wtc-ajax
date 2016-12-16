@@ -1762,7 +1762,7 @@ from a click event as added via the AJAX object or a child thererof.</p>
             
 <hr>
 <dt>
-    <h4 class="name" id="._parseResponse"><span class="type-signature">&lt;private, static> </span>_parseResponse(content, target, selection, fromPop [, onload] [, onerror] [, linkTarget])</h4>
+    <h4 class="name" id="._parseResponse"><span class="type-signature">&lt;private, static> </span>_parseResponse(content, target, selection [, linkTarget])</h4>
     
     
 </dt>
@@ -1799,8 +1799,6 @@ transitions and animations as necessary/</p>
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -1835,10 +1833,6 @@ transitions and animations as necessary/</p>
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last"><p>The loaded page content, this comes from the AJAX call.</p></td>
         </tr>
@@ -1870,10 +1864,6 @@ transitions and animations as necessary/</p>
                 </td>
             
 
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last"><p>The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.</p></td>
@@ -1907,126 +1897,8 @@ transitions and animations as necessary/</p>
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last"><p>This is a selector (or JSON of selectors) that determines what to cut from the loaded content.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>fromPop</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last"><p>Indicates that this load is from a history pop</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>onload</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The onload function to run (TBI).</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>onerror</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The on error function</p></td>
+            <td class="description last"><p>This is a selector that determines what to cut from the loaded content.</p></td>
         </tr>
 
     
@@ -2059,12 +1931,208 @@ transitions and animations as necessary/</p>
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last"><p>The target of the link. This is useful for setting active states in callback.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>An object representing both the main document and the subdocument</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="global.html#AJAXDocument">AJAXDocument</a></span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="._completeTransfer"><span class="type-signature">&lt;private, static> </span>_completeTransfer(content, target, fromPop)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>This completes the transition of content. This removes the old content and adds the new</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>content</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#AJAXDocument">AJAXDocument</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The DOM nodes to add to the element</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>target</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">DOMNode</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The target to add the new content to</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>fromPop</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Indicates that this load is from a history pop</p></td>
         </tr>
 
     
@@ -2354,7 +2422,7 @@ transitions and animations as necessary/</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a>
 	
-		on December 15th 2016, 5:16:20 pm
+		on December 16th 2016, 10:33:55 am
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
