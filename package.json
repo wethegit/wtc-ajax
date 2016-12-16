@@ -1,7 +1,13 @@
 {
   "name": "wtc-ajax",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "ES6 AJAX classes",
+  "main": "dist/wtc-ajax.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel src/ --presets babel-preset-es2015 --out-dir dist",
+    "prepublish": "npm run build"
+  },
   "babel": {
     "presets": [
       "es2015"
@@ -14,6 +20,7 @@
     "wtc-utility-helpers": "^1.2.4"
   },
   "devDependencies": {
+    "babel-cli": "^6.18.0",
     "babelify": "^7.3.0",
     "browserify": "^13.1.0",
     "gulp": "^3.9.1",
@@ -27,8 +34,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com:liamegan/liamegan.git"
+    "url": "git+https://github.com/wethegit/wtc-ajax.git"
   },
-  "author": "",
+  "keywords": [
+    "wtc"
+  ],
+  "homepage": "https://github.com/wethegit/wtc-ajax#readme",
+  "author": "Liam Egan <liam@wethecollective.com> (http://wethecollective.com)",
   "license": "ISC"
 }
