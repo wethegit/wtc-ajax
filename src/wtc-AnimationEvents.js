@@ -30,7 +30,7 @@ var detectAnimationEndTime = function(node)
       }
     }
     if(el.childNodes) {
-      for(i in el.childNodes) {
+      for(var i in el.childNodes) {
         recursiveLoop(el.childNodes[i]);
       }
     }
@@ -46,33 +46,39 @@ var detectAnimationEndTime = function(node)
 }
 
 /**
+ * The resolving object for the {@link wtc-AnimationEvents.addEndEventListener}
+ *
+ * @callback timerResolve
+ * @param {string} response           The response from the AJAX call
+ * @param {array} arguments           The arguments array originally passed to the {@link AJAX.ajaxGet} method
+ * @param {DOMElement} linkTarget     The target element that fired the {@link AJAX.ajaxGet} 
+ */
+
+/**
  * Allows us to add an end event listener to the node.
  *
  * @param  {HTMLElement}  node      The element to attach the end event listener to
- * @param  {function}     listener  The function to run when the animation is finished
- * @return {object}                 The utlity object that allows us to cancel or end this
+ * @param  {function}     listener  The function to run when the animation is finished. This allows us to construct an object to pass back through the promise chain of the parent.
+ * @return {Promise}                A promise that represents the animation timeout.
+ * @return {timerResolve}           The resolve method. Passes the coerced variables (if any) from the listening object back to the chain.
+ * @return {timerReject}            The reject method. Null.
  */
 var addEndEventListener = function(node, listener) {
+  console.log('---- addEndEventListener ----');
+  console.log(node, listener, typeof listener)
+  console.log('   ');
   if(typeof listener !== 'function')
   {
-    var listener = function(){};
+    var listener = function(){ return {} };
   }
-  var time = detectAnimationEndTime(node);
-  var timeout = setTimeout(listener, time)
-  var util = {
-    time: time,
-    timeout: timeout,
-    // target: node, // Removed this so as not to cause leaks.
-    cancel: function() {
-      clearTimeout(timeout);
-    },
-    end: function() {
-      this.cancel();
-      listener();
-    }
-  };
-
-  return util;
+  return new Promise(function(resolve, reject) {
+    var time = detectAnimationEndTime(node);
+    var timeout = setTimeout(function() {
+      var returner = listener();
+      returner.time = time;
+      resolve(returner);
+    }, time);
+  });
 }
 
 /**

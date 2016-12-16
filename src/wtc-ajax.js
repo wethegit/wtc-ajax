@@ -1,5 +1,6 @@
 import History from "./wtc-history";
 import Animation from "./wtc-AnimationEvents";
+import _u from 'wtc-utility-helpers';
 
 const STATES = {
   'OK'                : 0,
@@ -130,9 +131,9 @@ class AJAX extends History {
    * @param  {DOMElement} [linkTarget]        The target of the link. This is useful for setting active states in callback.
    * @param  {boolean} fromPop                Indicates that this GET is from a pop
    * @param  {object} [data = {}]             The data to pass to the AJAX call.
-   * @return {Promise}
-   * @return {loadResolve}
-   * @return {loadReject}                     A promise that represents the GET
+   * @return {Promise}                        A promise that represents the GET.
+   * @return {loadResolve}                    The resolve method. Passes the loaded content down through it's thenables, finally resolving to the parse commend via a second, private Promise.
+   * @return {loadReject}                     The reject method. Results in an error
    */
   static ajaxGet(URL, target, selection, linkTarget, fromPop = false, data = {}) {
 
@@ -186,18 +187,51 @@ class AJAX extends History {
     }.bind(this));
 
     // This promise takes the returned promise and runs the equivalent of a "finally"
-    Promise.resolve(requestPromise).then(function(resolver) {
-      if(resolver.error) {
-        throw resolver.error
-      } else if(!resolver.responseText) {
-        throw ERRORS.BAD_PROMISE
-      } else {
-        // Finally, pass the result.
+    Promise.
+      resolve(requestPromise).
+      then( function(resolver) {
+        if(resolver.error) {
+          throw resolver.error
+        } else if(!resolver.responseText) {
+          throw ERRORS.BAD_PROMISE
+        } else {
+          // Find the target node
+          let targetNode = document.querySelectorAll(target)[0];
+          // add the class to it
+          _u.addClass(this.classBaseTransition+'-out-start', targetNode);
+          _u.addClass(this.classBaseTransition+'-out', targetNode);
+          // Add the animation end listener to the target node
+          return Animation.addEndEventListener(targetNode, function() {
+            return resolver;
+          });
+        }
+      }.bind(this) ).
+      then( function(resolver) {
+        // Find the target node
+        let targetNode = document.querySelectorAll(target)[0];
+        // Modify its classes
+        _u.removeClass(this.classBaseTransition+'-out-start', targetNode);
+        _u.addClass(this.classBaseTransition+'-out-end', targetNode);
+        // Set a null timeout to repaint on classchange
+        return new Promise(function(resolve, reject) {
+          setTimeout(function() {
+            resolve(resolver);
+          }, this.resolveTimeout);
+        }.bind(this));
+      }.bind(this) ).
+      then(function(resolver) {
+        // Find the target node
+        let targetNode = document.querySelectorAll(target)[0];
+        // Modify its classes
+        _u.removeClass(this.classBaseTransition+'-out-end', targetNode);
+        _u.addClass(this.classBaseTransition+'-out', targetNode);
+        // Finally. Parse the result
         this._parseResponse(resolver.responseText, target, selection, fromPop, linkTarget)
-      }
-    }.bind(this)).catch(function(err) {
-      this._error(readyState, req.status, err || 0);
-    }.bind(this));
+      }.bind(this)).
+      catch( function(err) {
+        console.log(err)
+        this._error(readyState, req.status, err || 0);
+      }.bind(this) );
 
     // Save the last parsed URL for the purpose of history interoperability and error correction.
     this.lastParsedURL = parsedURL;
@@ -234,10 +268,8 @@ class AJAX extends History {
     var target = state.target || this.lastChangedTarget;
     var selection = state.selection || SELECTORS.CHILDREN;
     var data = state.data || {};
-    var onload = state.onload || function(){};
-    var onerror = state.onerror || this;
 
-    this.ajaxGet(href, target, selection, onload, onerror, true, data);
+    this.ajaxGet(href, target, selection, true, data);
 
     return hasPoppedState;
   }
@@ -284,11 +316,9 @@ class AJAX extends History {
    * @param  {string} target            The target for the loaded content. This can be a string (selector), or a JSON array of selector strings.
    * @param  {string} selection         This is a selector (or JSON of selectors) that determines what to cut from the loaded content.
    * @param  {boolean} fromPop          Indicates that this load is from a history pop
-   * @param  {function} [onload]        The onload function to run (TBI).
-   * @param  {function} [onerror]       The on error function
    * @param  {DOMElement} [linkTarget]  The target of the link. This is useful for setting active states in callback.
    */
-  static _parseResponse(content, target, selection, fromPop = false, onload, onerror, linkTarget) {
+  static _parseResponse(content, target, selection, fromPop = false, linkTarget) {
 
     var doc, results, oldTitle = document.title, newTitle, targetNodes;
 
@@ -332,7 +362,9 @@ class AJAX extends History {
 
     if( !fromPop ) {
       // Push the new state to the history.
-      this.push(this.lastParsedURL, newTitle, { target: target, selection: selection, onload: onload, onerror: onerror });
+      console.clear();
+      console.log({ target: target, selection: selection });
+      this.push(this.lastParsedURL, newTitle, { target: target, selection: selection });
     }
 
     // Set the object state
@@ -349,7 +381,7 @@ class AJAX extends History {
    * @return {type}            description
    */
   static _error(readyState, status, errorState = ERRORS.GENERIC_ERROR) {
-    var errorStateConst = (function(val) { for(key in ERRORS) { if(ERRORS[key] == val) return key } return 'GENERIC_ERROR' })(errorState)
+    var errorStateConst = (function(val) { for(var key in ERRORS) { if(ERRORS[key] == val) return key } return 'GENERIC_ERROR' })(errorState)
     console.warn(`%c Error loading AJAX link. readyState: ${readyState}. status: ${status}. errorState: ${errorStateConst}`, 'background: #222; color: #ff7c3a')
   }
 
@@ -480,6 +512,21 @@ class AJAX extends History {
   }
   static get lastChangedTarget() {
     return this._lastChangedTarget || null;
+  }
+
+  /**
+   * The resolve timeout. This is the time that is to ellapse between an transition
+   * completing and the new content being added. This is applied both to the outward
+   * element and the inward.
+   *
+   * @return {int}  A number, in MS, greater than 0
+   * @default 0
+   */
+  static set resolveTimeout(timeout) {
+    this._resolveTimeout = timeout > 0 ? timeout : null;
+  }
+  static get resolveTimeout() {
+    return this._resolveTimeout > 0 ? this._resolveTimeout : 0;
   }
 
   /**
