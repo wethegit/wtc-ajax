@@ -316,12 +316,16 @@ class AJAX extends History {
    * @return void
    */
   static _popstate(e) {
+    console.log('---- _popstate ---- ');
     var base, state = {};
     var hasPoppedState = super._popstate(e);
 
     if( hasPoppedState ) {
       state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
     }
+
+    console.log(state, hasPoppedState);
+    console.log(' ');
 
     var href = document.location.href;
     var target = state.target || this.lastChangedTarget;
@@ -418,7 +422,8 @@ class AJAX extends History {
 
     var oldTitle = document.title, newTitle, targetNodes;
 
-    console.log(content, content.doc.getElementsByTagName('title'));
+    console.log('--- completeTransfer ---');
+    console.log(content, oldTitle, content.doc.getElementsByTagName('title'));
 
     // Find the new page title
     newTitle = content.doc.getElementsByTagName('title')[0].text;
@@ -430,12 +435,10 @@ class AJAX extends History {
     });
 
     // Update the internal reference to the last target
-    this.lastChangedTarget = target;
+    this.lastChangedTarget = _u.getSelectorForElement(target);
 
     if( !fromPop ) {
       // Push the new state to the history.
-      console.clear();
-      console.log({ target: target, selection: selection });
       this.push(this.lastParsedURL, newTitle, { target: _u.getSelectorForElement(target), selection: selection });
     }
 
