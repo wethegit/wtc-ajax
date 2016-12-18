@@ -51,7 +51,7 @@ var detectAnimationEndTime = function(node)
  * @callback timerResolve
  * @param {string} response           The response from the AJAX call
  * @param {array} arguments           The arguments array originally passed to the {@link AJAX.ajaxGet} method
- * @param {DOMElement} linkTarget     The target element that fired the {@link AJAX.ajaxGet} 
+ * @param {DOMElement} linkTarget     The target element that fired the {@link AJAX.ajaxGet}
  */
 
 /**
@@ -64,9 +64,6 @@ var detectAnimationEndTime = function(node)
  * @return {timerReject}            The reject method. Null.
  */
 var addEndEventListener = function(node, listener) {
-  console.log('---- addEndEventListener ----');
-  console.log(node, listener, typeof listener)
-  console.log('   ');
   if(typeof listener !== 'function')
   {
     var listener = function(){ return {} };

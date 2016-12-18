@@ -102,11 +102,12 @@ class AJAX extends History {
    * @property {string}       response     The response from the AJAX call
    * @property {AJAXDocument} document     The document nodes resulting from this call.
    * @property {array}        arguments    The arguments array originally passed to the {@link AJAX.ajaxGet} method
-   * @property {DOMElement}   linkTarget   The target element that fired the {@link AJAX.ajaxGet} 
+   * @property {DOMElement}   linkTarget   The target element that fired the {@link AJAX.ajaxGet}
    */
-
-
   /**
+   * This is the output of all eventual AJAX calls. This object represents the result
+   * of the AJAX call and contains both the full HTML document and the selected subdoc.
+   *
    * @typedef {Object}              AJAXDocument
    * @property {DOMElement} doc     The full document node for the AJAX GET result
    * @property {NodeList}   subdoc  The subdocument derived from the main document
@@ -164,10 +165,28 @@ class AJAX extends History {
     var readyState = 0;
     var status = 0;
     var args = arguments;
+    var transClass = this.classBaseTransition;
+
+    let transitionRun = false;
+    let loadRun = false;
+    let resolver = null;
+
+    // @todo need to add proper error checking here.
+
+    // Modify the classes on the containing element
+    _u.removeClass(transClass+'-in-end', DOMTarget);
+    _u.removeClass(transClass+'-in', DOMTarget);
+    _u.removeClass(transClass+'-in-start', DOMTarget);
+    _u.addClass(transClass+'-out-start', DOMTarget);
+    _u.addClass(transClass+'-out', DOMTarget);
+    // Add the animation end listener to the target node
+    Animation.
+      addEndEventListener(DOMTarget).
+      then(function() {
+        transitionRun = true;
+      });
 
     var requestPromise = new Promise(function handler(resolve, reject) {
-
-      // Need to add all sorts of error checking here.
 
       // Listen for the ready state
       req.addEventListener('readystatechange', (e) => {
@@ -185,9 +204,9 @@ class AJAX extends History {
           var AJAXDocument = this._parseResponse(responseText, target, selection, fromPop, linkTarget)
           // Build the resolver
           var resolver = {
-            responseText: responseText, 
+            responseText: responseText,
             document: AJAXDocument,
-            arguments: args, 
+            arguments: args,
             linkTarget: linkTarget || null,
             DOMTarget: DOMTarget
           }
@@ -212,32 +231,37 @@ class AJAX extends History {
         } else if(!resolver.responseText) {
           throw ERRORS.BAD_PROMISE
         } else {
-          // Find the target node
-          let targetNode = resolver.DOMTarget;
-          // add the class to it
-          _u.removeClass(this.classBaseTransition+'-in-end', targetNode);
-          _u.addClass(this.classBaseTransition+'-out-start', targetNode);
-          _u.addClass(this.classBaseTransition+'-out', targetNode);
-          // Add the animation end listener to the target node
-          return Animation.addEndEventListener(targetNode, function() {
-            return resolver;
-          });
+
+          // load run is done, so set the variable to true
+          loadRun = true;
+
+          // Resolve Promis to test, on interval, whether the transition has
+          // completed. When it has, resolve the promise.
+          let resolve = new Promise(function(resolve, reject) {
+            let testInterval = null;
+            let testResolved = function() {
+              if(transitionRun === true)
+              {
+                // Find the target node
+                let targetNode = resolver.DOMTarget;
+                // Modify its classes
+                _u.removeClass(this.classBaseTransition+'-out-start', targetNode);
+                _u.addClass(this.classBaseTransition+'-out-end', targetNode);
+                // Clear the interval
+                clearInterval(testInterval);
+
+                setTimeout(function() {
+                  resolve(resolver);
+                }, this.resolveTimeout);
+              }
+            }.bind(this)
+
+            testInterval = setInterval(testResolved, 50);
+          }.bind(this));
+
+          return resolve;
         }
-      }.bind(this) ).
-      // THEN: responsible for adding the end class, then returning a promise with the listed resolveTimeout
-      then( function(resolver) {
-        // Find the target node
-        let targetNode = resolver.DOMTarget;
-        // Modify its classes
-        _u.removeClass(this.classBaseTransition+'-out-start', targetNode);
-        _u.addClass(this.classBaseTransition+'-out-end', targetNode);
-        // Set a null timeout to repaint on classchange
-        return new Promise(function(resolve, reject) {
-          setTimeout(function() {
-            resolve(resolver);
-          }, this.resolveTimeout);
-        }.bind(this));
-      }.bind(this) ).
+      }.bind(this)).
       // THEN: responsible for adding the final content to the main document. Returns a promise that identifies the transition
       then(function(resolver) {
         // Find the target node
