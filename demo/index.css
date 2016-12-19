@@ -10,6 +10,28 @@ body
   min-height: 100px;
 }
 
+.wtc-transition-out > *,
+.wtc-transition-in > *
+{
+  transition: opacity 1s linear;
+}
+.wtc-transition-out-start > *
+{
+  opacity: 1;
+}
+.wtc-transition-out-end > *
+{
+  opacity: 0;
+}
+.wtc-transition-in-start > *
+{
+  opacity: 0;
+}
+.wtc-transition-in-end > *
+{
+  opacity: 1;
+}
+
 .content
 {
   padding: 0px 20px;

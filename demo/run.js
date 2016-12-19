@@ -18,7 +18,7 @@ ready(function()
   // This initialises any links with AJAX attributes
   AJAX.initLinks();
 
-  AJAX.resolveTimeout = 1000; // Remove this when not 
+  // AJAX.resolveTimeout = 1000; // Remove this when not in dev mode
 
   // This is a manual initialisation of links and is, instead, a demonstration
   // of how programatic AJAX retrieval works.

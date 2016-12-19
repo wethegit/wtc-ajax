@@ -174,12 +174,17 @@ class AJAX extends History {
     // @todo need to add proper error checking here.
 
     // Modify the classes on the containing element
-    _u.removeClass(transClass+'-in-end', DOMTarget);
     _u.removeClass(transClass+'-in', DOMTarget);
     _u.removeClass(transClass+'-in-start', DOMTarget);
+    _u.removeClass(transClass+'-in-end', DOMTarget);
+    _u.removeClass(transClass+'-in-finish', DOMTarget);
     _u.addClass(transClass+'-out-start', DOMTarget);
     _u.addClass(transClass+'-out', DOMTarget);
+    setTimeout(function() {
+      _u.addClass(transClass+'-out-end', DOMTarget);
+    }, 0)
     // Add the animation end listener to the target node
+    // This just sets transition run to true
     Animation.
       addEndEventListener(DOMTarget).
       then(function() {
@@ -242,11 +247,6 @@ class AJAX extends History {
             let testResolved = function() {
               if(transitionRun === true)
               {
-                // Find the target node
-                let targetNode = resolver.DOMTarget;
-                // Modify its classes
-                _u.removeClass(this.classBaseTransition+'-out-start', targetNode);
-                _u.addClass(this.classBaseTransition+'-out-end', targetNode);
                 // Clear the interval
                 clearInterval(testInterval);
 
@@ -267,10 +267,15 @@ class AJAX extends History {
         // Find the target node
         let targetNode = resolver.DOMTarget;
         // Modify its classes
+        console.log('removing classes')
+        _u.removeClass(this.classBaseTransition+'-out-finish', targetNode);
         _u.removeClass(this.classBaseTransition+'-out-end', targetNode);
         _u.removeClass(this.classBaseTransition+'-out', targetNode);
-        _u.addClass(this.classBaseTransition+'-in', targetNode);
-        _u.addClass(this.classBaseTransition+'-in-start', targetNode);
+        _u.addClass(transClass+'-in', DOMTarget);
+        _u.addClass(transClass+'-in-start', DOMTarget);
+        setTimeout(function() {
+          _u.addClass(transClass+'-in-end', DOMTarget);
+        }, 0);
         // Finally. Parse the result
         this._completeTransfer(resolver.document, targetNode, selection, fromPop);
         // Add the animation end listener to the target node
@@ -285,7 +290,8 @@ class AJAX extends History {
         // Modify its classes
         _u.removeClass(this.classBaseTransition+'-in', targetNode);
         _u.removeClass(this.classBaseTransition+'-in-start', targetNode);
-        _u.addClass(this.classBaseTransition+'-in-end', targetNode);
+        _u.removeClass(this.classBaseTransition+'-in-end', targetNode);
+        _u.addClass(this.classBaseTransition+'-in-finish', targetNode);
       }.bind(this)).
       catch( function(err) {
         console.log(err)
@@ -528,9 +534,11 @@ class AJAX extends History {
    * *.wtc-transition-out*
    * *.wtc-transition-out-start*
    * *.wtc-transition-out-end*
+   * *.wtc-transition-out-finish*
    * *.wtc-transition-in*
    * *.wtc-transition-in-start*
    * *.wtc-transition-in-end*
+   * *.wtc-transition-in-finish*
    *
    * @type {string}
    * @default 'wtc-transition'
