@@ -1,6 +1,6 @@
 {
   "name": "wtc-ajax",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "ES6 AJAX classes",
   "main": "dist/wtc-ajax.js",
   "scripts": {
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
+    "babel-polyfill": "^6.20.0",
     "babelify": "^7.3.0",
     "browserify": "^13.1.0",
     "gulp": "^3.9.1",

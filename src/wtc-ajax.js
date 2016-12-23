@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import History from "./wtc-history";
 import Animation from "./wtc-AnimationEvents";
 import _u from 'wtc-utility-helpers';
@@ -102,7 +103,7 @@ class AJAX extends History {
    * @property {string}       response     The response from the AJAX call
    * @property {AJAXDocument} document     The document nodes resulting from this call.
    * @property {array}        arguments    The arguments array originally passed to the {@link AJAX.ajaxGet} method
-   * @property {DOMElement}   linkTarget   The target element that fired the {@link AJAX.ajaxGet} 
+   * @property {DOMElement}   linkTarget   The target element that fired the {@link AJAX.ajaxGet}
    */
 
 
@@ -185,9 +186,9 @@ class AJAX extends History {
           var AJAXDocument = this._parseResponse(responseText, target, selection, fromPop, linkTarget)
           // Build the resolver
           var resolver = {
-            responseText: responseText, 
+            responseText: responseText,
             document: AJAXDocument,
-            arguments: args, 
+            arguments: args,
             linkTarget: linkTarget || null,
             DOMTarget: DOMTarget
           }
