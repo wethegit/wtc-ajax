@@ -94,6 +94,17 @@ class AJAX extends History {
     });
   }
 
+  emitEvent(eventID, data = {}) {
+    if (window.CustomEvent) {
+      var event = new CustomEvent(eventID, {detail: data});
+    } else {
+      var event = document.createEvent('CustomEvent');
+      event.initCustomEvent(eventID, true, true, data);
+    }
+
+    document.dispatchEvent(event);
+  }
+
   /**
    * The resolving object. This is the object that is passed to AJAX GET promise thens
    * and should be passed onto subsequent THENable calls.
@@ -278,6 +289,9 @@ class AJAX extends History {
         }, 0);
         // Finally. Parse the result
         this._completeTransfer(resolver.document, targetNode, selection, fromPop);
+        // Emit an event
+        // @todo document this.
+        this.emitEvent('ajax-get-addedToDom', {doc: resolver.document, targetNode: targetNode, selection: selection});
         // Add the animation end listener to the target node
         return Animation.addEndEventListener(targetNode, function() {
           return resolver;
