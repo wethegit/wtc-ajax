@@ -1,6 +1,6 @@
 {
   "name": "wtc-ajax",
-  "version": "0.5.1",
+  "version": "0.5.4",
   "description": "ES6 AJAX classes",
   "main": "dist/wtc-ajax.js",
   "scripts": {

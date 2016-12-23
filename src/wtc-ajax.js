@@ -95,6 +95,17 @@ class AJAX extends History {
     });
   }
 
+  static emitEvent(eventID, data = {}) {
+    if (window.CustomEvent) {
+      var event = new CustomEvent(eventID, {detail: data});
+    } else {
+      var event = document.createEvent('CustomEvent');
+      event.initCustomEvent(eventID, true, true, data);
+    }
+
+    document.dispatchEvent(event);
+  }
+
   /**
    * The resolving object. This is the object that is passed to AJAX GET promise thens
    * and should be passed onto subsequent THENable calls.
@@ -105,9 +116,10 @@ class AJAX extends History {
    * @property {array}        arguments    The arguments array originally passed to the {@link AJAX.ajaxGet} method
    * @property {DOMElement}   linkTarget   The target element that fired the {@link AJAX.ajaxGet}
    */
-
-
   /**
+   * This is the output of all eventual AJAX calls. This object represents the result
+   * of the AJAX call and contains both the full HTML document and the selected subdoc.
+   *
    * @typedef {Object}              AJAXDocument
    * @property {DOMElement} doc     The full document node for the AJAX GET result
    * @property {NodeList}   subdoc  The subdocument derived from the main document
@@ -165,10 +177,33 @@ class AJAX extends History {
     var readyState = 0;
     var status = 0;
     var args = arguments;
+    var transClass = this.classBaseTransition;
+
+    let transitionRun = false;
+    let loadRun = false;
+    let resolver = null;
+
+    // @todo need to add proper error checking here.
+
+    // Modify the classes on the containing element
+    _u.removeClass(transClass+'-in', DOMTarget);
+    _u.removeClass(transClass+'-in-start', DOMTarget);
+    _u.removeClass(transClass+'-in-end', DOMTarget);
+    _u.removeClass(transClass+'-in-finish', DOMTarget);
+    _u.addClass(transClass+'-out-start', DOMTarget);
+    _u.addClass(transClass+'-out', DOMTarget);
+    setTimeout(function() {
+      _u.addClass(transClass+'-out-end', DOMTarget);
+    }, 0)
+    // Add the animation end listener to the target node
+    // This just sets transition run to true
+    Animation.
+      addEndEventListener(DOMTarget).
+      then(function() {
+        transitionRun = true;
+      });
 
     var requestPromise = new Promise(function handler(resolve, reject) {
-
-      // Need to add all sorts of error checking here.
 
       // Listen for the ready state
       req.addEventListener('readystatechange', (e) => {
@@ -213,43 +248,51 @@ class AJAX extends History {
         } else if(!resolver.responseText) {
           throw ERRORS.BAD_PROMISE
         } else {
-          // Find the target node
-          let targetNode = resolver.DOMTarget;
-          // add the class to it
-          _u.removeClass(this.classBaseTransition+'-in-end', targetNode);
-          _u.addClass(this.classBaseTransition+'-out-start', targetNode);
-          _u.addClass(this.classBaseTransition+'-out', targetNode);
-          // Add the animation end listener to the target node
-          return Animation.addEndEventListener(targetNode, function() {
-            return resolver;
-          });
+
+          // load run is done, so set the variable to true
+          loadRun = true;
+
+          // Resolve Promis to test, on interval, whether the transition has
+          // completed. When it has, resolve the promise.
+          let resolve = new Promise(function(resolve, reject) {
+            let testInterval = null;
+            let testResolved = function() {
+              if(transitionRun === true)
+              {
+                // Clear the interval
+                clearInterval(testInterval);
+
+                setTimeout(function() {
+                  resolve(resolver);
+                }, this.resolveTimeout);
+              }
+            }.bind(this)
+
+            testInterval = setInterval(testResolved, 50);
+          }.bind(this));
+
+          return resolve;
         }
-      }.bind(this) ).
-      // THEN: responsible for adding the end class, then returning a promise with the listed resolveTimeout
-      then( function(resolver) {
-        // Find the target node
-        let targetNode = resolver.DOMTarget;
-        // Modify its classes
-        _u.removeClass(this.classBaseTransition+'-out-start', targetNode);
-        _u.addClass(this.classBaseTransition+'-out-end', targetNode);
-        // Set a null timeout to repaint on classchange
-        return new Promise(function(resolve, reject) {
-          setTimeout(function() {
-            resolve(resolver);
-          }, this.resolveTimeout);
-        }.bind(this));
-      }.bind(this) ).
+      }.bind(this)).
       // THEN: responsible for adding the final content to the main document. Returns a promise that identifies the transition
       then(function(resolver) {
         // Find the target node
         let targetNode = resolver.DOMTarget;
         // Modify its classes
+        console.log('removing classes')
+        _u.removeClass(this.classBaseTransition+'-out-finish', targetNode);
         _u.removeClass(this.classBaseTransition+'-out-end', targetNode);
         _u.removeClass(this.classBaseTransition+'-out', targetNode);
-        _u.addClass(this.classBaseTransition+'-in', targetNode);
-        _u.addClass(this.classBaseTransition+'-in-start', targetNode);
+        _u.addClass(transClass+'-in', DOMTarget);
+        _u.addClass(transClass+'-in-start', DOMTarget);
+        setTimeout(function() {
+          _u.addClass(transClass+'-in-end', DOMTarget);
+        }, 0);
         // Finally. Parse the result
         this._completeTransfer(resolver.document, targetNode, selection, fromPop);
+        // Emit an event
+        // @todo document this.
+        this.emitEvent('ajax-get-addedToDom', {doc: resolver.document, targetNode: targetNode, selection: selection});
         // Add the animation end listener to the target node
         return Animation.addEndEventListener(targetNode, function() {
           return resolver;
@@ -262,7 +305,8 @@ class AJAX extends History {
         // Modify its classes
         _u.removeClass(this.classBaseTransition+'-in', targetNode);
         _u.removeClass(this.classBaseTransition+'-in-start', targetNode);
-        _u.addClass(this.classBaseTransition+'-in-end', targetNode);
+        _u.removeClass(this.classBaseTransition+'-in-end', targetNode);
+        _u.addClass(this.classBaseTransition+'-in-finish', targetNode);
       }.bind(this)).
       catch( function(err) {
         console.log(err)
@@ -293,12 +337,16 @@ class AJAX extends History {
    * @return void
    */
   static _popstate(e) {
+    console.log('---- _popstate ---- ');
     var base, state = {};
     var hasPoppedState = super._popstate(e);
 
     if( hasPoppedState ) {
       state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
     }
+
+    console.log(state, hasPoppedState);
+    console.log(' ');
 
     var href = document.location.href;
     var target = state.target || this.lastChangedTarget;
@@ -395,7 +443,8 @@ class AJAX extends History {
 
     var oldTitle = document.title, newTitle, targetNodes;
 
-    console.log(content, content.doc.getElementsByTagName('title'));
+    console.log('--- completeTransfer ---');
+    console.log(content, oldTitle, content.doc.getElementsByTagName('title'));
 
     // Find the new page title
     newTitle = content.doc.getElementsByTagName('title')[0].text;
@@ -407,12 +456,10 @@ class AJAX extends History {
     });
 
     // Update the internal reference to the last target
-    this.lastChangedTarget = target;
+    this.lastChangedTarget = _u.getSelectorForElement(target);
 
     if( !fromPop ) {
       // Push the new state to the history.
-      console.clear();
-      console.log({ target: target, selection: selection });
       this.push(this.lastParsedURL, newTitle, { target: _u.getSelectorForElement(target), selection: selection });
     }
 
@@ -502,9 +549,11 @@ class AJAX extends History {
    * *.wtc-transition-out*
    * *.wtc-transition-out-start*
    * *.wtc-transition-out-end*
+   * *.wtc-transition-out-finish*
    * *.wtc-transition-in*
    * *.wtc-transition-in-start*
    * *.wtc-transition-in-end*
+   * *.wtc-transition-in-finish*
    *
    * @type {string}
    * @default 'wtc-transition'

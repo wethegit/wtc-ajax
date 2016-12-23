@@ -77,6 +77,7 @@ class History {
     if(this.support)
     {
       try {
+        console.log(stateObj);
         this.history.pushState(stateObj, title, parsedURL);
       } catch (e) {
         if(this.devmode) {
@@ -205,6 +206,7 @@ class History {
         state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
         return true;
       } catch (e) {
+        console.log(e);
         return false;
       }
     }
@@ -238,7 +240,6 @@ class History {
     const docrootRegex = /^([^:]+:\/\/([^\/]+))?\/?(.*(?=\/))?/;
     // pass the docroot and hostname
     const [_1, _2, hostname, docroot] = docrootRegex.exec(documentRoot);
-    console.log(hostname, docroot);
 
     // Error check
     // check for the presence of the reported TLDN

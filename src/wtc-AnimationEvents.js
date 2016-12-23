@@ -12,13 +12,16 @@
  * on it. Returns the time in milliseconds.
  *
  * @private
- * @param   {HTMLElement} node  The node o detext the transition time for.
- * @return  {Number}            The full transition time for the node, including delays, in milliseconds
+ * @param   {HTMLElement} node    The node to detect the transition time for.
+ * @param   {Number}      [depth] How deep to test for transitions, defaults to null, which means no depth limitation
+ * @return  {Number}              The full transition time for the node, including delays, in milliseconds
  */
-var detectAnimationEndTime = function(node)
+var detectAnimationEndTime = function(node, depth = null)
 {
   var fulltime = 0;
   var timeRegex = /(\d+\.?(\d+)?)(s|ms)/;
+  var currentDepth = 0;
+  var maxDepth = (typeof depth === 'number' && depth >= 0) ? depth : -1;
   var recursiveLoop = function(el) {
     if(el instanceof Element) {
       var timebreakdown = timeRegex.exec(window.getComputedStyle(el).transitionDuration)
@@ -29,9 +32,19 @@ var detectAnimationEndTime = function(node)
         fulltime = time + delay
       }
     }
-    if(el.childNodes) {
-      for(var i in el.childNodes) {
-        recursiveLoop(el.childNodes[i]);
+    if(maxDepth > -1) {
+      if(currentDepth++ < maxDepth) {
+        if(el.childNodes) {
+          for(var i in el.childNodes) {
+            recursiveLoop(el.childNodes[i]);
+          }
+        }
+      }
+    } else {
+      if(el.childNodes) {
+        for(var i in el.childNodes) {
+          recursiveLoop(el.childNodes[i]);
+        }
       }
     }
   }
@@ -51,7 +64,7 @@ var detectAnimationEndTime = function(node)
  * @callback timerResolve
  * @param {string} response           The response from the AJAX call
  * @param {array} arguments           The arguments array originally passed to the {@link AJAX.ajaxGet} method
- * @param {DOMElement} linkTarget     The target element that fired the {@link AJAX.ajaxGet} 
+ * @param {DOMElement} linkTarget     The target element that fired the {@link AJAX.ajaxGet}
  */
 
 /**
@@ -59,20 +72,18 @@ var detectAnimationEndTime = function(node)
  *
  * @param  {HTMLElement}  node      The element to attach the end event listener to
  * @param  {function}     listener  The function to run when the animation is finished. This allows us to construct an object to pass back through the promise chain of the parent.
+ * @param  {Number}       [depth]   How deep to test for transitions, defaults to null, which means no depth limitation
  * @return {Promise}                A promise that represents the animation timeout.
  * @return {timerResolve}           The resolve method. Passes the coerced variables (if any) from the listening object back to the chain.
  * @return {timerReject}            The reject method. Null.
  */
-var addEndEventListener = function(node, listener) {
-  console.log('---- addEndEventListener ----');
-  console.log(node, listener, typeof listener)
-  console.log('   ');
+var addEndEventListener = function(node, listener, depth) {
   if(typeof listener !== 'function')
   {
     var listener = function(){ return {} };
   }
   return new Promise(function(resolve, reject) {
-    var time = detectAnimationEndTime(node);
+    var time = detectAnimationEndTime(node, depth);
     var timeout = setTimeout(function() {
       var returner = listener();
       returner.time = time;
