@@ -94,7 +94,7 @@ class AJAX extends History {
     });
   }
 
-  emitEvent(eventID, data = {}) {
+  static emitEvent(eventID, data = {}) {
     if (window.CustomEvent) {
       var event = new CustomEvent(eventID, {detail: data});
     } else {
