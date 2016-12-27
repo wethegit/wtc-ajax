@@ -6,6 +6,25 @@
  * @version 0.8
  * @created Nov 19, 2016
  */
+
+// Custom Event polyfill
+// @todo We should probably move this out somewhere else
+(function () {
+
+ if ( typeof window.CustomEvent === "function" ) return false;
+
+ function CustomEvent ( event, params ) {
+   params = params || { bubbles: false, cancelable: false, detail: undefined };
+   var evt = document.createEvent( 'CustomEvent' );
+   evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+   return evt;
+  }
+
+ CustomEvent.prototype = window.Event.prototype;
+
+ window.CustomEvent = CustomEvent;
+})();
+
 class History {
 
   /**
@@ -25,6 +44,7 @@ class History {
    * @param  {string} eventID   description
    * @param  {object} data = {} description
    */
+
   static emitEvent(eventID, data = {}) {
     if (window.CustomEvent) {
       var event = new CustomEvent(eventID, {detail: data});
