@@ -148,8 +148,6 @@ class History {
     const URLRegex = RegExp(`^([^:]+://([^/]+))?(${this.documentRoot})?(/)?([^\\#\\?]*)(\\?[^\\#]*)?(\\#\\!?.+)?`);
     const [input, href, hostname, documentRoot, root, path, params, hashbang] = URLRegex.exec(URL);
 
-    console.log(this.documentRoot, documentRoot, root, path);
-
     // If we're observing the TLDN restraint and the provided URL doesn't match
     // the domain's TLDN, throw a URIError
     if( typeof hostname === 'string' && hostname !== this.TLDN && this.observeTLDN === true ) {
@@ -384,7 +382,7 @@ class History {
    *
    * @type {integer}
    */
-  static get length() {
+  static get $length() {
     return this.history.length;
   }
 }

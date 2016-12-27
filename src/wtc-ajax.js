@@ -91,7 +91,6 @@ class AJAX extends History {
 
         e.preventDefault();
       });
-      console.log(link);
     }
   }
 
@@ -279,7 +278,6 @@ class AJAX extends History {
         // Find the target node
         let targetNode = resolver.DOMTarget;
         // Modify its classes
-        console.log('removing classes')
         _u.removeClass(this.classBaseTransition+'-out-finish', targetNode);
         _u.removeClass(this.classBaseTransition+'-out-end', targetNode);
         _u.removeClass(this.classBaseTransition+'-out', targetNode);
@@ -309,7 +307,6 @@ class AJAX extends History {
         _u.addClass(this.classBaseTransition+'-in-finish', targetNode);
       }.bind(this)).
       catch( function(err) {
-        console.log(err)
         this._error(readyState, req.status, err || 0);
       }.bind(this) );
 
@@ -337,16 +334,12 @@ class AJAX extends History {
    * @return void
    */
   static _popstate(e) {
-    console.log('---- _popstate ---- ');
     var base, state = {};
     var hasPoppedState = super._popstate(e);
 
     if( hasPoppedState ) {
       state = (base = this.history).state || (base.state = e.state || (e.state = window.event.state));
     }
-
-    console.log(state, hasPoppedState);
-    console.log(' ');
 
     var href = document.location.href;
     var target = state.target || this.lastChangedTarget;
@@ -442,9 +435,6 @@ class AJAX extends History {
   static _completeTransfer(content, target, selection, fromPop) {
 
     var oldTitle = document.title, newTitle, targetNodes;
-
-    console.log('--- completeTransfer ---');
-    console.log(content, oldTitle, content.doc.getElementsByTagName('title'));
 
     // Find the new page title
     newTitle = content.doc.getElementsByTagName('title')[0].text;

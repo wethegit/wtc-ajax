@@ -27,7 +27,7 @@ ready(function()
       AJAX.
         ajaxGet("/demo/page1.html", "#link1-target", ".link1-selection", e.target).
         then(function(resolver) {
-          // console.log('onLoad', resolver);
+          console.log('onLoad', resolver);
           return resolver;
         });
     });
