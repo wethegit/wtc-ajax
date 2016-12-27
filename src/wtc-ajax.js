@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import History from "./wtc-history";
 import Animation from "./wtc-AnimationEvents";
 import _u from 'wtc-utility-helpers';
@@ -81,7 +82,7 @@ class AJAX extends History {
   static initLinks(rootDocument = document.body) {
     const links = rootDocument.querySelectorAll(`[${this.attributeAjax}="true"]`);
 
-    links.forEach((link)=> {
+    for (let link of links) {
       // Removing this attribute ensures that this link doesn't get a second AJAX listener attached to it.
       link.removeAttribute(this.attributeAjax);
 
@@ -91,7 +92,7 @@ class AJAX extends History {
         e.preventDefault();
       });
       console.log(link);
-    });
+    }
   }
 
   static emitEvent(eventID, data = {}) {
@@ -450,9 +451,9 @@ class AJAX extends History {
 
     target.innerHTML = '';
 
-    content.subdoc.forEach(function(result) {
+    for (let result of content.subdoc) {
       target.appendChild(result.cloneNode(true));
-    });
+    }
 
     // Update the internal reference to the last target
     this.lastChangedTarget = _u.getSelectorForElement(target);
