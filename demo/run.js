@@ -18,6 +18,13 @@ ready(function()
   // This initialises any links with AJAX attributes
   AJAX.initLinks();
 
+  // Listen for errors
+  let listener = function(e) {
+    console.log(e.detail)
+    e.target.removeEventListener(e.type, arguments.callee);
+  }
+  document.addEventListener("ajax-get-error", listener);
+
   // AJAX.resolveTimeout = 1000; // Remove this when not in dev mode
 
   // This is a manual initialisation of links and is, instead, a demonstration
@@ -28,7 +35,10 @@ ready(function()
         ajaxGet("/demo/page1.html", "#link1-target", ".link1-selection", e.target).
         then(function(resolver) {
           console.log('onLoad', resolver);
+          throw "foo bar";
           return resolver;
+        }).catch(function(e) {
+          alert(e);
         });
     });
   });

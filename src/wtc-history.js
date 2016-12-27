@@ -13,6 +13,31 @@ class History {
    */
 
   /**
+   * Emits an event from the history object
+   *
+   * @example
+   * let listener = function(e) {
+   *   console.log(e.detail)
+   *   e.target.removeEventListener(e.type, arguments.callee);
+   * }
+   * document.addEventListener("ajax-get-addedToDom", listener);
+   *
+   * @param  {string} eventID   description
+   * @param  {object} data = {} description
+   */
+  static emitEvent(eventID, data = {}) {
+    if (window.CustomEvent) {
+      var event = new CustomEvent(eventID, {detail: data});
+    } else {
+      var event = document.createEvent('CustomEvent');
+      event.initCustomEvent(eventID, true, true, data);
+    }
+
+    document.dispatchEvent(event);
+  }
+
+
+  /**
     * Initialises the History class. Nothing should be able to
     * operate here unless this has run with a support = true.
     *

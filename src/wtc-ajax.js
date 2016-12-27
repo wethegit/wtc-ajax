@@ -94,17 +94,6 @@ class AJAX extends History {
     }
   }
 
-  static emitEvent(eventID, data = {}) {
-    if (window.CustomEvent) {
-      var event = new CustomEvent(eventID, {detail: data});
-    } else {
-      var event = document.createEvent('CustomEvent');
-      event.initCustomEvent(eventID, true, true, data);
-    }
-
-    document.dispatchEvent(event);
-  }
-
   /**
    * The resolving object. This is the object that is passed to AJAX GET promise thens
    * and should be passed onto subsequent THENable calls.
@@ -182,6 +171,11 @@ class AJAX extends History {
     let loadRun = false;
     let resolver = null;
 
+    let catcher = function(err) {
+      this.emitEvent('ajax-get-error', {readyState: readyState, statusm: req.statusm, err: err});
+      this._error(readyState, req.status, err || 0);
+    }.bind(this)
+
     // @todo need to add proper error checking here.
 
     // Modify the classes on the containing element
@@ -200,7 +194,11 @@ class AJAX extends History {
       addEndEventListener(DOMTarget).
       then(function() {
         transitionRun = true;
-      });
+
+        // Emit the document loaded event with the resolving
+        this.emitEvent('ajax-get-animationOutRun', {DOMTarget: DOMTarget});
+      }.bind(this)).
+      catch( catcher );
 
     var requestPromise = new Promise(function handler(resolve, reject) {
 
@@ -235,12 +233,15 @@ class AJAX extends History {
       req.addEventListener('error', (e) => {
         reject(ERRORS.LOAD_ERROR);
       });
-    }.bind(this));
+    }.bind(this)).
+    catch( catcher );
 
     // This promise takes the returned promise and runs the equivalent of a "finally"
     Promise.
       resolve(requestPromise).
-      // THEN: responsible for adding the transition classes, then finding the transition length and rutinging the promise from that
+      // THEN: Responsible for testing whether the transition has run, this
+      // alleviates a race condition between the document loading and the
+      // transition OUT completion.
       then( function(resolver) {
         if(resolver.error) {
           throw resolver.error
@@ -251,7 +252,7 @@ class AJAX extends History {
           // load run is done, so set the variable to true
           loadRun = true;
 
-          // Resolve Promis to test, on interval, whether the transition has
+          // Resolve Promise to test, on interval, whether the transition has
           // completed. When it has, resolve the promise.
           let resolve = new Promise(function(resolve, reject) {
             let testInterval = null;
@@ -270,11 +271,19 @@ class AJAX extends History {
             testInterval = setInterval(testResolved, 50);
           }.bind(this));
 
+          // Emit the document loaded event with the resolving
+          this.emitEvent('ajax-get-documentLoaded', resolver);
+
           return resolve;
         }
       }.bind(this)).
       // THEN: responsible for adding the final content to the main document. Returns a promise that identifies the transition
       then(function(resolver) {
+        try {
+
+        } catch (e) {
+
+        }
         // Find the target node
         let targetNode = resolver.DOMTarget;
         // Modify its classes
@@ -287,7 +296,11 @@ class AJAX extends History {
           _u.addClass(transClass+'-in-end', DOMTarget);
         }, 0);
         // Finally. Parse the result
-        this._completeTransfer(resolver.document, targetNode, selection, fromPop);
+        try {
+          this._completeTransfer(resolver.document, targetNode, selection, fromPop);
+        } catch (e) {
+          throw e;
+        }
         // Emit an event
         // @todo document this.
         this.emitEvent('ajax-get-addedToDom', {doc: resolver.document, targetNode: targetNode, selection: selection});
@@ -305,10 +318,10 @@ class AJAX extends History {
         _u.removeClass(this.classBaseTransition+'-in-start', targetNode);
         _u.removeClass(this.classBaseTransition+'-in-end', targetNode);
         _u.addClass(this.classBaseTransition+'-in-finish', targetNode);
+        // Emit the finally response
+        this.emitEvent('ajax-get-finally', {targetNode: targetNode});
       }.bind(this)).
-      catch( function(err) {
-        this._error(readyState, req.status, err || 0);
-      }.bind(this) );
+      catch( catcher );
 
     // Save the last parsed URL for the purpose of history interoperability and error correction.
     this.lastParsedURL = parsedURL;
