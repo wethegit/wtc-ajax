@@ -223,7 +223,7 @@ class AJAX extends History {
 
         if( this.devmode ) {
           let diffInTime = new Date() - currentTime;
-          console.log(`%c Document get has changed to ${readyState} after: ${diffInTime}ms`, 'background: #666; color: #FFF');
+          console.log(`%c Document load readtState has changed to ${readyState} after: ${diffInTime}ms`, 'background: #666; color: #FFF');
         }
 
         readyState = e.target.readyState;
