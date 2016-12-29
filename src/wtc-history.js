@@ -62,9 +62,10 @@ class History {
     * operate here unless this has run with a support = true.
     *
     * @Public
+    * @param {boolean}  devmode Indicated whether the object is running in dev mode (will log outputs to console)
     * @return {boolean}         Returns whether init ran or not
     */
-  static init(devmode = false) {
+  static init( devmode = false ) {
     if(this.support)
     {
       // Try to set everything up, and if we fail then return false

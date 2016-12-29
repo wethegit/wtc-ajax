@@ -151,7 +151,7 @@ class AJAX extends History {
     {
       if( this.devmode )
       {
-        console.warn( "Tried run an AJAX GET when the object wasn't in OK or CLICKED mode" );
+        console.warn( "Tried to run an AJAX GET when the object wasn't in OK or CLICKED mode. State (currently: "+this.state+") should be less than "+STATES.CLICKED );
       }
 
       return;
@@ -190,8 +190,13 @@ class AJAX extends History {
     }, 0)
     // Add the animation end listener to the target node
     // This just sets transition run to true
+    // Dev mode output
+    if( this.devmode ) {
+      let animationTime = detectAnimationEndTime(DOMTarget, this.animationDepth);
+      console.warn( "Animation out time is: "+animationTime );
+    }
     Animation.
-      addEndEventListener(DOMTarget).
+      addEndEventListener(DOMTarget, null, this.animationDepth).
       then(function() {
         transitionRun = true;
 
@@ -305,9 +310,13 @@ class AJAX extends History {
         // @todo document this.
         this.emitEvent('ajax-get-addedToDom', {doc: resolver.document, targetNode: targetNode, selection: selection});
         // Add the animation end listener to the target node
+        if( this.devmode ) {
+          let animationTime = detectAnimationEndTime(targetNode);
+          console.warn( "Animation in time is: "+animationTime );
+        }
         return Animation.addEndEventListener(targetNode, function() {
           return resolver;
-        });
+        }, this.animationDepth);
       }.bind(this)).
       // THEN: Responsible for tidying everything up
       then(function(resolver) {
@@ -681,6 +690,24 @@ class AJAX extends History {
   }
   static get lastParsedURL() {
     return this._lastParsedURL || null;
+  }
+
+  /**
+   * The depth to check for transitions. This is to allow you to set the
+   * depth to check for transitions on based on deep transitions that are longer
+   * or have a much larger delay than intended.
+   *
+   * @return {number}  The depth to check for transitions
+   * @default null
+   */
+  static set animationDepth(depth) {
+    let _depth = Math.abs(depth);
+    if( typeof _depth === 'number' && !isNaN(_depth) ) {
+      this._animationDepth = _depth;
+    }
+  }
+  static get animationDepth() {
+    return this._animationDepth || null;
   }
 }
 
