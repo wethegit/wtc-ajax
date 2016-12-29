@@ -192,7 +192,7 @@ class AJAX extends History {
     // This just sets transition run to true
     // Dev mode output
     if( this.devmode ) {
-      let animationTime = detectAnimationEndTime(DOMTarget, this.animationDepth);
+      let animationTime = Animation.detectAnimationEndTime(DOMTarget, this.animationDepth);
       console.warn( "Animation out time is: "+animationTime );
     }
     Animation.
@@ -311,7 +311,7 @@ class AJAX extends History {
         this.emitEvent('ajax-get-addedToDom', {doc: resolver.document, targetNode: targetNode, selection: selection});
         // Add the animation end listener to the target node
         if( this.devmode ) {
-          let animationTime = detectAnimationEndTime(targetNode);
+          let animationTime = Animation.detectAnimationEndTime(targetNode);
           console.warn( "Animation in time is: "+animationTime );
         }
         return Animation.addEndEventListener(targetNode, function() {
