@@ -99,7 +99,8 @@ var addEndEventListener = function(node, listener, depth) {
  * @export
  */
 var Animation = {
-  addEndEventListener: addEndEventListener
+  addEndEventListener: addEndEventListener,
+  detectAnimationEndTime: detectAnimationEndTime
 };
 
 
