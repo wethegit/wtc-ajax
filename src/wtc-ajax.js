@@ -157,6 +157,11 @@ class AJAX extends History {
       return;
     }
 
+    let currentTime = new Date();
+    if( this.devmode ) {
+      console.log(`%c Starting Ajax GET. Setting time to 0 `, 'background: #666; color: #FFF');
+    }
+
     // Retrieve a request object and construct a valid URL
     const req = this.requestObject;
     const parsedURL = this._fixURL(URL);
@@ -193,11 +198,17 @@ class AJAX extends History {
     // Dev mode output
     if( this.devmode ) {
       let animationTime = Animation.detectAnimationEndTime(DOMTarget, this.animationDepth);
-      console.warn( "Animation out time is: "+animationTime );
+      console.log(`%c Animation out time is: ${animationTime}ms`, 'background: #888; color: #FFF');
     }
     Animation.
       addEndEventListener(DOMTarget, null, this.animationDepth).
       then(function() {
+
+        if( this.devmode ) {
+          let diffInTime = new Date() - currentTime;
+          console.log(`%c Transition out has completed after: ${diffInTime}ms`, 'background: #666; color: #FFF');
+        }
+
         transitionRun = true;
 
         // Emit the document loaded event with the resolving
@@ -209,6 +220,12 @@ class AJAX extends History {
 
       // Listen for the ready state
       req.addEventListener('readystatechange', (e) => {
+
+        if( this.devmode ) {
+          let diffInTime = new Date() - currentTime;
+          console.log(`%c Document get has changed to ${readyState} after: ${diffInTime}ms`, 'background: #666; color: #FFF');
+        }
+
         readyState = e.target.readyState;
         status = e.target.status;
       });
@@ -217,6 +234,12 @@ class AJAX extends History {
       req.addEventListener('load', (e) => {
         // If we have a ready state that indicated that the load was a success, continue
         if( req.status >= 200 && req.status < 400 ) {
+
+          if( this.devmode ) {
+            let diffInTime = new Date() - currentTime;
+            console.log(`%c Document has loaded after: ${diffInTime}ms`, 'background: #666; color: #FFF');
+          }
+
           // Get the request response text
           var responseText = req.responseText
           // Get the AJAXDocument
@@ -264,6 +287,10 @@ class AJAX extends History {
             let testResolved = function() {
               if(transitionRun === true)
               {
+                if( this.devmode ) {
+                  let diffInTime = new Date() - currentTime;
+                  console.log(`%c Document has loaded AND transition OUT has run after: ${diffInTime}ms`, 'background: #666; color: #FFF');
+                }
                 // Clear the interval
                 clearInterval(testInterval);
 
@@ -311,8 +338,8 @@ class AJAX extends History {
         this.emitEvent('ajax-get-addedToDom', {doc: resolver.document, targetNode: targetNode, selection: selection});
         // Add the animation end listener to the target node
         if( this.devmode ) {
-          let animationTime = Animation.detectAnimationEndTime(targetNode);
-          console.warn( "Animation in time is: "+animationTime );
+          let animationTime = Animation.detectAnimationEndTime(targetNode, this.animationDepth);
+          console.log(`%c Animation in time is: ${animationTime}ms`, 'background: #888; color: #FFF');
         }
         return Animation.addEndEventListener(targetNode, function() {
           return resolver;
@@ -329,6 +356,11 @@ class AJAX extends History {
         _u.addClass(this.classBaseTransition+'-in-finish', targetNode);
         // Emit the finally response
         this.emitEvent('ajax-get-finally', {targetNode: targetNode});
+
+        if( this.devmode ) {
+          let diffInTime = new Date() - currentTime;
+          console.log(`%c Document load and transition IN is complete after: ${diffInTime}ms`, 'background: #666; color: #FFF');
+        }
       }.bind(this)).
       catch( catcher );
 

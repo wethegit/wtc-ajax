@@ -35,7 +35,6 @@ ready(function()
         ajaxGet("/demo/page1.html", "#link1-target", ".link1-selection", e.target).
         then(function(resolver) {
           console.log('onLoad', resolver);
-          throw "foo bar";
           return resolver;
         }).catch(function(e) {
           alert(e);
