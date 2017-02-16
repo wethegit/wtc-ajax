@@ -123,7 +123,7 @@ class History {
     if(this.support)
     {
       try {
-        console.log(stateObj);
+        // console.log(stateObj);
         this.history.pushState(stateObj, title, parsedURL);
       } catch (e) {
         if(this.devmode) {
