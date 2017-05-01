@@ -743,4 +743,4 @@ class AJAX extends History {
   }
 }
 
-export { AJAX, ERRORS, STATES };
+export { AJAX, ERRORS, STATES, History };
