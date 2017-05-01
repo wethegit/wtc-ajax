@@ -1,11 +1,4 @@
-/**
- * Class representing an abstraction of the history API.
- * @static
- * @namespace
- * @author Liam Egan <liam@wethecollective.com>
- * @version 0.8
- * @created Nov 19, 2016
- */
+
 
 // Custom Event polyfill
 // @todo We should probably move this out somewhere else
@@ -25,6 +18,14 @@
  window.CustomEvent = CustomEvent;
 })();
 
+/**
+ * Class representing an abstraction of the history API.
+ * @static
+ * @namespace
+ * @author Liam Egan <liam@wethecollective.com>
+ * @version 0.9
+ * @created Nov 19, 2016
+ */
 class History {
 
   /**
@@ -41,8 +42,8 @@ class History {
    * }
    * document.addEventListener("ajax-get-addedToDom", listener);
    *
-   * @param  {string} eventID   description
-   * @param  {object} data = {} description
+   * @param  {string} eventID   the event ID to emit
+   * @param  {object} data = {} the data to include with the event
    */
 
   static emitEvent(eventID, data = {}) {
@@ -97,6 +98,9 @@ class History {
 
   /**
    * Construct and push a URL state
+   *
+   * @example
+   * AJAXObj.push('/dev/foo/bar', 'The title for the history object')
    *
    * @public
    * @param  {string} URL           The URL to push, can be relative, absolute or full
