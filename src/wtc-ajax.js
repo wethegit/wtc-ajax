@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+// import 'babel-polyfill';
 import History from "./wtc-history";
 import Animation from "./wtc-AnimationEvents";
 import _u from 'wtc-utility-helpers';
