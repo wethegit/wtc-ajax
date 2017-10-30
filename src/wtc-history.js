@@ -274,6 +274,11 @@ class History {
    */
   static set documentRoot(documentRoot = '') {
 
+    if(/^\/?$/.test(documentRoot)) {
+      this._documentRoot = '/';
+      return;
+    }
+
     /**
      * docrootRegex works like this:
      * ```
@@ -299,7 +304,10 @@ class History {
       throw new URIError('Top Level domain name MUST match the primary domain name');
     }
 
-    this._documentRoot = `/${docroot}`;
+    if(docroot) {
+      this._documentRoot = `/${docroot}`;
+    }
+    
   }
   static get documentRoot() {
     return this._documentRoot || '/';
