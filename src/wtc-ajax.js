@@ -495,7 +495,7 @@ class AJAX extends History {
 
     target.innerHTML = '';
 
-    for (let result of content.subdoc) {
+    for (let result of Array.from(content.subdoc)) {
       target.appendChild(result.cloneNode(true));
     }
 
