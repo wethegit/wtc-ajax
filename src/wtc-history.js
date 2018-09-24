@@ -210,7 +210,7 @@ class History {
       ( typeof root === 'string' && root === '/' ) ||
       ( typeof documentRoot === 'string' && documentRoot === this.documentRoot )
     ) {
-      if( includeDocRoot ) {
+      if( includeDocRoot && this.documentRoot !== '/' ) {
         rtnURL = `${this.documentRoot}/${path}`;
       } else {
         rtnURL = `/${path}`;
